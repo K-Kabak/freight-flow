@@ -64,7 +64,15 @@ Live demo: pending Vercel deployment.
 
 ## Screenshots
 
-Production screenshots will be added after deployment.
+![FreightFlow dashboard](public/screenshots/dashboard.png)
+
+<details>
+<summary>More screens</summary>
+
+![Shipment management](public/screenshots/shipments.png)
+
+![Freight analytics](public/screenshots/analytics.png)
+</details>
 
 ## License
 
