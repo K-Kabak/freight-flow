@@ -60,7 +60,7 @@ Deploy to Vercel, configure both public Supabase environment variables, then reg
 
 ## Demo
 
-Live demo: pending Vercel deployment.
+Live demo: [freight-flow-tau.vercel.app](https://freight-flow-tau.vercel.app)
 
 ## Screenshots
 
