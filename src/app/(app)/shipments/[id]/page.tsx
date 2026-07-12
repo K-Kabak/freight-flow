@@ -1,0 +1,2 @@
+import { notFound } from "next/navigation"; import { PageHeader } from "@/components/page-header"; import { ShipmentForm } from "@/components/shipments/shipment-form"; import { shipments } from "@/data/mock-data";
+export default async function EditShipmentPage({params}:{params:Promise<{id:string}>}){const{id}=await params;const shipment=shipments.find(s=>s.id===id);if(!shipment)notFound();return <><PageHeader title={`Edit ${shipment.referenceNumber}`} description="Update operational details, pricing or shipment status."/><ShipmentForm shipment={shipment}/></>}
