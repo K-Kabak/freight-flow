@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FreightFlow
 
-## Getting Started
+FreightFlow is a portfolio-grade transport management dashboard for dispatchers and freight teams. It centralizes shipments, clients, carriers and profitability in one clear operational workspace.
 
-First, run the development server:
+## Features
+
+- Supabase email/password authentication and protected routes
+- Shipment management with status tracking, search and filters
+- Client and carrier directories with operational metrics
+- Automatic profit, margin and reporting-currency calculations
+- Dashboard KPIs and six-month Recharts analytics
+- PostgreSQL schema with strict row-level security
+- Responsive desktop and mobile interface
+- Unit, browser and CI quality checks
+
+## Tech stack
+
+Next.js 16, TypeScript, Tailwind CSS 4, Supabase/PostgreSQL, Recharts, React Hook Form, Zod, Vitest and Playwright.
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Without Supabase environment variables the app starts in a read-only portfolio demo mode with realistic freight data.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Supabase project.
+2. Apply `supabase/migrations/202607120001_initial_schema.sql` using the Supabase CLI or SQL editor.
+3. Add the project URL and anonymous key to `.env.local`.
+4. Add `http://localhost:3000/auth/callback` and the production callback URL to the Auth redirect allow list.
+5. Create the optional demo account in Auth, then seed business records using its UUID. Never commit its password.
 
-## Learn More
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Quality checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Data security
 
-## Deploy on Vercel
+Every business record is owned by a Supabase Auth user. PostgreSQL row-level security isolates profiles, clients, carriers and shipments. Cross-user client/carrier relationships are rejected, while restrictive foreign keys preserve historical shipment integrity.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy to Vercel, configure both public Supabase environment variables, then register the Vercel callback URL in Supabase Auth. GitHub Actions validates linting, types, unit tests and the production build.
+
+## Demo
+
+Live demo: pending Vercel deployment.
+
+## Screenshots
+
+Production screenshots will be added after deployment.
+
+## License
+
+MIT
