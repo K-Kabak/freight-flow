@@ -1,0 +1,2 @@
+import Link from "next/link"; import { AuthForm } from "@/components/auth-form"; import { AuthShell } from "@/components/auth-shell";
+export default function Register(){return <AuthShell title="Create your workspace" description="Start managing transport profitability in minutes." footer={<>Already registered? <Link className="font-semibold text-emerald-700" href="/login">Sign in</Link></>}><AuthForm mode="register"/></AuthShell>}
