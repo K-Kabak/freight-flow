@@ -10,19 +10,21 @@ FreightFlow is under active development. The deployed portfolio demo currently u
 | --- | --- |
 | Responsive dashboard, tables and charts | Demo data |
 | Shipment search, status filter and margin preview | Working in demo mode |
-| Supabase schema and row-level security | Implemented, integration in progress |
-| Authentication and shipment persistence | In progress |
+| Supabase schema, grants and row-level security | Implemented and tested locally |
+| Email/password auth, recovery and sign-out | Working with Supabase configured |
+| Shipment create, read, edit, status update and delete | Working with Supabase configured |
 | Client/carrier CRUD, export and live analytics | Planned |
 
 ## Tech stack
 
-Next.js 16, TypeScript, Tailwind CSS 4, Supabase/PostgreSQL, Recharts, React Hook Form, Zod, Vitest and Playwright.
+Next.js 16, TypeScript, Tailwind CSS 4, Supabase/PostgreSQL, Recharts, Zod, Vitest and Playwright.
 
 ## Getting started
 
 ```bash
 npm install
 cp .env.example .env.local
+npx supabase start
 npm run dev
 ```
 
@@ -30,11 +32,14 @@ Open `http://localhost:3000`. Without Supabase environment variables the app sta
 
 ## Supabase setup
 
-1. Create a Supabase project.
-2. Apply `supabase/migrations/202607120001_initial_schema.sql` using the Supabase CLI or SQL editor.
-3. Add the project URL and anonymous key to `.env.local`.
-4. Add `http://localhost:3000/auth/callback` and the production callback URL to the Auth redirect allow list.
-5. Create the optional demo account in Auth, then seed business records using its UUID. Never commit its password.
+For local development, install Docker and run `npx supabase start`. Copy the reported API URL and publishable key to `.env.local`; all migrations are applied automatically.
+
+For a hosted project:
+
+1. Create and link a Supabase project with `npx supabase link`.
+2. Apply every migration with `npx supabase db push`.
+3. Add the project URL and publishable key to `.env.local` and Vercel.
+4. Allow local and production `/auth/callback` URLs in Supabase Auth settings.
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
@@ -51,6 +56,13 @@ npm run build
 npm run test:e2e
 ```
 
+The authenticated CRUD and RLS suite requires the local Supabase stack:
+
+```powershell
+$env:SUPABASE_E2E="true"
+npm run test:e2e -- --workers=1
+```
+
 ## Data security
 
 Every business record is owned by a Supabase Auth user. PostgreSQL row-level security isolates profiles, clients, carriers and shipments. Cross-user client/carrier relationships are rejected, while restrictive foreign keys preserve historical shipment integrity.
@@ -61,7 +73,7 @@ Deploy to Vercel, configure both public Supabase environment variables, then reg
 
 ## Demo
 
-Live demo: [freight-flow-tau.vercel.app](https://freight-flow-tau.vercel.app)
+Read-only demo: [freight-flow-tau.vercel.app](https://freight-flow-tau.vercel.app). The deployed demo intentionally has no Supabase credentials; authenticated persistence is verified locally until a hosted project is provisioned.
 
 ## Screenshots
 
