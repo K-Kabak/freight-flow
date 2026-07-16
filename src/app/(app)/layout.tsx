@@ -1,2 +1,2 @@
-import { AppShell } from "@/components/app-shell";
-export default function ProtectedLayout({ children }: { children:React.ReactNode }) { return <AppShell>{children}</AppShell>; }
+import { AppShell } from "@/components/app-shell"; import { createClient } from "@/lib/supabase/server";
+export default async function ProtectedLayout({children}:{children:React.ReactNode}){const supabase=await createClient();if(!supabase)return <AppShell fullName="Alex Kowalski" email="demo@freightflow.app" isDemo>{children}</AppShell>;const{data:{user}}=await supabase.auth.getUser();let fullName=user?.email?.split("@")[0]??"FreightFlow user";if(user){const{data:profile}=await supabase.from("profiles").select("full_name").eq("id",user.id).maybeSingle();if(profile?.full_name)fullName=profile.full_name}return <AppShell fullName={fullName} email={user?.email??""} isDemo={false}>{children}</AppShell>}
