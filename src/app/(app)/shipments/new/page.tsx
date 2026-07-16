@@ -1,2 +1,2 @@
-import { PageHeader } from "@/components/page-header"; import { ShipmentForm } from "@/components/shipments/shipment-form";
-export default function NewShipmentPage(){return <><PageHeader title="Add shipment" description="Create a new freight order and review its expected margin."/><ShipmentForm/></>}
+import { PageHeader } from "@/components/page-header"; import { ShipmentForm } from "@/components/shipments/shipment-form"; import { getDirectoryOptions } from "@/lib/data/shipments";
+export default async function NewShipmentPage(){const{clients,carriers,isDemo}=await getDirectoryOptions();return <><PageHeader title="Add shipment" description="Create a freight order and review its expected margin."/><ShipmentForm clients={clients} carriers={carriers} isDemo={isDemo}/></>}

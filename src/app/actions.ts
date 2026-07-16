@@ -1,14 +1,34 @@
 "use server";
-import { revalidatePath } from "next/cache"; import { redirect } from "next/navigation"; import { z } from "zod"; import { createClient } from "@/lib/supabase/server";
-const id=z.string().uuid();const shipmentSchema=z.object({client_id:id,carrier_id:id,reference_number:z.string().min(2).max(50),pickup_city:z.string().min(2),delivery_city:z.string().min(2),pickup_date:z.string().date(),delivery_date:z.string().date(),client_price:z.coerce.number().nonnegative(),carrier_cost:z.coerce.number().nonnegative(),additional_costs:z.coerce.number().nonnegative().default(0),currency:z.enum(["PLN","EUR","USD"]),exchange_rate_to_base:z.coerce.number().positive(),status:z.enum(["New","Accepted","In Transit","Delivered","Cancelled","Issue"]),notes:z.string().max(2000).optional()}).refine(v=>v.delivery_date>=v.pickup_date,{message:"Delivery cannot precede pickup"});
-async function auth(){const supabase=await createClient();if(!supabase)throw new Error("Supabase is not configured");const{data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("Unauthorized");return{supabase,user}}
-export async function upsertShipment(formData:FormData,shipmentId?:string){const data=shipmentSchema.parse(Object.fromEntries(formData));const{supabase,user}=await auth();const query=shipmentId?supabase.from("shipments").update(data).eq("id",shipmentId):supabase.from("shipments").insert({...data,user_id:user.id});const{error}=await query;if(error)throw new Error(error.message);revalidatePath("/shipments");redirect("/shipments")}
-export async function deleteShipment(shipmentId:string){id.parse(shipmentId);const{supabase}=await auth();const{error}=await supabase.from("shipments").delete().eq("id",shipmentId);if(error)throw new Error(error.message);revalidatePath("/shipments")}
-export async function updateShipmentStatus(shipmentId:string,status:string){id.parse(shipmentId);const valid=z.enum(["New","Accepted","In Transit","Delivered","Cancelled","Issue"]).parse(status);const{supabase}=await auth();const{error}=await supabase.from("shipments").update({status:valid}).eq("id",shipmentId);if(error)throw new Error(error.message);revalidatePath("/shipments")}
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { shipmentFormSchema } from "@/lib/validation/shipment";
+
+export type ActionResult = { ok:true } | { ok:false; message:string; fieldErrors?:Record<string,string[]> };
+const idSchema = z.string().uuid();
+
+async function auth() { const supabase=await createClient(); if(!supabase) return null; const {data:{user}}=await supabase.auth.getUser(); return user ? {supabase,user} : null; }
+function refreshShipments(){ revalidatePath("/shipments"); revalidatePath("/dashboard"); revalidatePath("/analytics"); }
+
+export async function upsertShipment(formData:FormData, shipmentId?:string):Promise<ActionResult> {
+  const parsed=shipmentFormSchema.safeParse(Object.fromEntries(formData));
+  if(!parsed.success) return {ok:false,message:"Check the highlighted fields.",fieldErrors:parsed.error.flatten().fieldErrors};
+  const session=await auth(); if(!session) return {ok:false,message:"Your session expired. Sign in again."};
+  const payload={...parsed.data,notes:parsed.data.notes||null};
+  const query=shipmentId ? session.supabase.from("shipments").update(payload).eq("id",idSchema.parse(shipmentId)) : session.supabase.from("shipments").insert({...payload,user_id:session.user.id});
+  const {error}=await query;
+  if(error) return {ok:false,message:error.code==="23505"?"This reference number already exists.":"The shipment could not be saved."};
+  refreshShipments(); return {ok:true};
+}
+
+export async function deleteShipment(shipmentId:string):Promise<ActionResult>{const parsed=idSchema.safeParse(shipmentId);if(!parsed.success)return{ok:false,message:"Invalid shipment."};const session=await auth();if(!session)return{ok:false,message:"Your session expired. Sign in again."};const{error}=await session.supabase.from("shipments").delete().eq("id",parsed.data);if(error)return{ok:false,message:"The shipment could not be deleted."};refreshShipments();return{ok:true}}
+export async function updateShipmentStatus(shipmentId:string,status:string):Promise<ActionResult>{const parsed=z.object({id:idSchema,status:z.enum(["New","Accepted","In Transit","Delivered","Cancelled","Issue"])}).safeParse({id:shipmentId,status});if(!parsed.success)return{ok:false,message:"Invalid status."};const session=await auth();if(!session)return{ok:false,message:"Your session expired. Sign in again."};const{error}=await session.supabase.from("shipments").update({status:parsed.data.status}).eq("id",parsed.data.id);if(error)return{ok:false,message:"The status could not be updated."};refreshShipments();return{ok:true}}
+
 const clientSchema=z.object({company_name:z.string().min(2),tax_id:z.string().min(3),contact_person:z.string().min(2),email:z.string().email(),phone:z.string().min(5)});
 const carrierSchema=z.object({company_name:z.string().min(2),country:z.string().min(2),contact_person:z.string().min(2),email:z.string().email(),phone:z.string().min(5),vehicle_type:z.string().min(2),rating:z.coerce.number().int().min(1).max(5)});
-export async function upsertClient(formData:FormData,clientId?:string){const data=clientSchema.parse(Object.fromEntries(formData));const{supabase,user}=await auth();const query=clientId?supabase.from("clients").update(data).eq("id",clientId):supabase.from("clients").insert({...data,user_id:user.id});const{error}=await query;if(error)throw new Error(error.message);revalidatePath("/clients");redirect("/clients")}
-export async function deleteClient(clientId:string){id.parse(clientId);const{supabase}=await auth();const{error}=await supabase.from("clients").delete().eq("id",clientId);if(error?.code==="23503")throw new Error("Reassign or delete this client's shipments first.");if(error)throw new Error(error.message);revalidatePath("/clients")}
-export async function upsertCarrier(formData:FormData,carrierId?:string){const data=carrierSchema.parse(Object.fromEntries(formData));const{supabase,user}=await auth();const query=carrierId?supabase.from("carriers").update(data).eq("id",carrierId):supabase.from("carriers").insert({...data,user_id:user.id});const{error}=await query;if(error)throw new Error(error.message);revalidatePath("/carriers");redirect("/carriers")}
-export async function deleteCarrier(carrierId:string){id.parse(carrierId);const{supabase}=await auth();const{error}=await supabase.from("carriers").delete().eq("id",carrierId);if(error?.code==="23503")throw new Error("Reassign or delete this carrier's shipments first.");if(error)throw new Error(error.message);revalidatePath("/carriers")}
+export async function upsertClient(formData:FormData,clientId?:string){const data=clientSchema.parse(Object.fromEntries(formData));const session=await auth();if(!session)throw new Error("Unauthorized");const query=clientId?session.supabase.from("clients").update(data).eq("id",clientId):session.supabase.from("clients").insert({...data,user_id:session.user.id});const{error}=await query;if(error)throw new Error(error.message);revalidatePath("/clients");redirect("/clients")}
+export async function deleteClient(clientId:string){idSchema.parse(clientId);const session=await auth();if(!session)throw new Error("Unauthorized");const{error}=await session.supabase.from("clients").delete().eq("id",clientId);if(error?.code==="23503")throw new Error("Reassign or delete this client's shipments first.");if(error)throw new Error(error.message);revalidatePath("/clients")}
+export async function upsertCarrier(formData:FormData,carrierId?:string){const data=carrierSchema.parse(Object.fromEntries(formData));const session=await auth();if(!session)throw new Error("Unauthorized");const query=carrierId?session.supabase.from("carriers").update(data).eq("id",carrierId):session.supabase.from("carriers").insert({...data,user_id:session.user.id});const{error}=await query;if(error)throw new Error(error.message);revalidatePath("/carriers");redirect("/carriers")}
+export async function deleteCarrier(carrierId:string){idSchema.parse(carrierId);const session=await auth();if(!session)throw new Error("Unauthorized");const{error}=await session.supabase.from("carriers").delete().eq("id",carrierId);if(error?.code==="23503")throw new Error("Reassign or delete this carrier's shipments first.");if(error)throw new Error(error.message);revalidatePath("/carriers")}
 export async function signOut(){const supabase=await createClient();await supabase?.auth.signOut();redirect("/login")}
