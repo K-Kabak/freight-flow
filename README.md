@@ -2,16 +2,17 @@
 
 FreightFlow is a portfolio-grade transport management dashboard for dispatchers and freight teams. It centralizes shipments, clients, carriers and profitability in one clear operational workspace.
 
-## Features
+## Current status
 
-- Supabase email/password authentication and protected routes
-- Shipment management with status tracking, search and filters
-- Client and carrier directories with operational metrics
-- Automatic profit, margin and reporting-currency calculations
-- Dashboard KPIs and six-month Recharts analytics
-- PostgreSQL schema with strict row-level security
-- Responsive desktop and mobile interface
-- Unit, browser and CI quality checks
+FreightFlow is under active development. The deployed portfolio demo currently uses read-only mock data.
+
+| Area | Status |
+| --- | --- |
+| Responsive dashboard, tables and charts | Demo data |
+| Shipment search, status filter and margin preview | Working in demo mode |
+| Supabase schema and row-level security | Implemented, integration in progress |
+| Authentication and shipment persistence | In progress |
+| Client/carrier CRUD, export and live analytics | Planned |
 
 ## Tech stack
 

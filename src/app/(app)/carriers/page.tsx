@@ -1,2 +1,5 @@
-import Link from "next/link"; import { Plus } from "lucide-react"; import { PageHeader } from "@/components/page-header"; import { Button } from "@/components/ui/button"; import { DirectoryTable } from "@/components/directory-table";
-export default function CarriersPage(){return <><PageHeader title="Carriers" description="Keep your trusted transport network organized and rated."><Link href="/carriers/new"><Button><Plus size={16}/>Add carrier</Button></Link></PageHeader><DirectoryTable type="carriers"/></>}
+import { Info } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { DirectoryTable } from "@/components/directory-table";
+export default function CarriersPage(){return <><PageHeader title="Carriers" description="Demo preview — carrier management follows the shipment milestone."><Button variant="outline" disabled><Info size={16}/>Demo data</Button></PageHeader><DirectoryTable type="carriers"/></>}
