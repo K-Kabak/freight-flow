@@ -6,7 +6,7 @@ import type { Shipment } from "@/types";
 import { currencies, shipmentStatuses } from "@/types";
 import type { DirectoryOption } from "@/lib/data/shipments";
 import { calculateMarginPercent, calculateProfit } from "@/lib/calculations";
-import { upsertShipment } from "@/app/actions";
+import { createStarterDirectory,upsertShipment } from "@/app/actions";
 import { Button } from "@/components/ui/button"; import { Input, Label, Select } from "@/components/ui/input"; import { Card, CardContent } from "@/components/ui/card"; import { formatMoney } from "@/lib/utils";
 
 const Field=({label,name,children,error}:{label:string;name:string;children:React.ReactNode;error?:string})=><div><Label htmlFor={name}>{label}</Label>{children}{error&&<p className="mt-1 text-xs text-red-600">{error}</p>}</div>;
@@ -16,6 +16,7 @@ export function ShipmentForm({shipment,clients,carriers,isDemo}:Props){
   const router=useRouter(); const[price,setPrice]=useState(shipment?.clientPrice??0); const[cost,setCost]=useState(shipment?.carrierCost??0); const[extra,setExtra]=useState(shipment?.additionalCosts??0); const[currency,setCurrency]=useState(shipment?.currency??"PLN"); const[saving,setSaving]=useState(false); const[errors,setErrors]=useState<Record<string,string[]>>({});
   const profit=useMemo(()=>calculateProfit(price,cost,extra),[price,cost,extra]); const margin=calculateMarginPercent(profit,price);
   async function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();if(isDemo)return;setSaving(true);setErrors({});const result=await upsertShipment(new FormData(event.currentTarget),shipment?.id);setSaving(false);if(!result.ok){setErrors(result.fieldErrors??{});toast.error(result.message);return}toast.success(shipment?"Shipment updated":"Shipment created");router.push("/shipments");router.refresh()}
+  async function createStarter(){setSaving(true);const result=await createStarterDirectory();setSaving(false);if(!result.ok)return toast.error(result.message);toast.success("Starter directory created");router.refresh()}
   const error=(name:string)=>errors[name]?.[0];
   return <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[1fr_320px]">
     <Card><CardContent className="grid gap-5 sm:grid-cols-2">
@@ -36,7 +37,7 @@ export function ShipmentForm({shipment,clients,carriers,isDemo}:Props){
     </CardContent></Card>
     <div className="space-y-5"><Card><CardContent><p className="text-sm font-semibold text-slate-900">Margin preview</p><div className="mt-5 space-y-3 text-sm"><div className="flex justify-between text-slate-500"><span>Client price</span><span>{formatMoney(price,currency)}</span></div><div className="flex justify-between text-slate-500"><span>Total costs</span><span>− {formatMoney(cost+extra,currency)}</span></div><div className="border-t border-slate-100 pt-3"><div className="flex justify-between font-semibold"><span>Profit</span><span className={profit>=0?"text-emerald-700":"text-red-600"}>{formatMoney(profit,currency)}</span></div><div className="mt-2 flex justify-between"><span className="text-slate-500">Margin</span><span className="font-bold">{margin}%</span></div></div></div></CardContent></Card>
       {isDemo&&<p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">The public demo is read-only. Configure Supabase and sign in to manage shipments.</p>}
-      {!isDemo&&(!clients.length||!carriers.length)&&<p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Add at least one client and carrier in Supabase before creating a shipment.</p>}
+      {!isDemo&&(!clients.length||!carriers.length)&&<div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"><p>Create starter client and carrier records to complete your first shipment.</p><Button type="button" variant="outline" className="mt-3" disabled={saving} onClick={createStarter}>Create starter directory</Button></div>}
       <div className="flex gap-2"><Button type="button" variant="outline" className="flex-1" onClick={()=>router.back()}>Cancel</Button><Button type="submit" disabled={isDemo||saving||!clients.length||!carriers.length} className="flex-1">{saving?"Saving…":shipment?"Save changes":"Create shipment"}</Button></div>
     </div>
   </form>;
