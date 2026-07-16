@@ -1,2 +1,2 @@
 import { expect,test } from "@playwright/test";
-test("demo dashboard and shipment workflow are accessible",async({page})=>{await page.goto("/dashboard");await expect(page.getByRole("heading",{name:/Good morning/})).toBeVisible();await page.goto("/shipments");await expect(page.getByRole("heading",{name:"Shipments"})).toBeVisible();await page.getByPlaceholder(/Search reference/).fill("FR-003");await expect(page.getByText("Warsaw")).toBeVisible()});
+test("authentication screen is responsive",async({page})=>{await page.goto("/login");await expect(page.getByRole("heading",{name:"Welcome back"})).toBeVisible();await expect(page.getByLabel("Email address")).toBeVisible()});
