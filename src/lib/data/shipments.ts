@@ -22,7 +22,7 @@ export async function getShipments(query?:ShipmentQuery): Promise<{shipments:Shi
   if (!supabase) {const filtered=demoShipments.filter(item=>(!query?.status||query.status==="All"||item.status===query.status)&&`${item.referenceNumber} ${item.client} ${item.pickupCity} ${item.deliveryCity}`.toLowerCase().includes((query?.q??"").toLowerCase()));return{shipments:query?filtered.slice((page-1)*pageSize,page*pageSize):filtered,total:filtered.length,page,pageCount:Math.max(1,Math.ceil(filtered.length/pageSize)),isDemo:true}}
   let request=supabase.from("shipments").select("*, clients(company_name), carriers(company_name)",{count:"exact"});
   if(query?.status&&query.status!=="All")request=request.eq("status",query.status as ShipmentRow["status"]);
-  if(query?.q){const term=query.q.replace(/[,%()]/g,"");request=request.or(`reference_number.ilike.%${term}%,pickup_city.ilike.%${term}%,delivery_city.ilike.%${term}%`)}
+  if(query?.q){const term=query.q.replace(/[,%()]/g,"");const{data:matchingClients}=await supabase.from("clients").select("id").ilike("company_name",`%${term}%`);const clientFilter=matchingClients?.length?`,client_id.in.(${matchingClients.map(client=>client.id).join(",")})`:"";request=request.or(`reference_number.ilike.%${term}%,pickup_city.ilike.%${term}%,delivery_city.ilike.%${term}%${clientFilter}`)}
   const sortFields:Record<string,keyof ShipmentRow>={reference:"reference_number",profit:"profit",status:"status",pickup:"pickup_date"};const sort=sortFields[query?.sort??"pickup"]??"pickup_date";
   request=request.order(sort,{ascending:sort!=="pickup_date"});if(query)request=request.range((page-1)*pageSize,page*pageSize-1);
   const { data, error,count } = await request;
