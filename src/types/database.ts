@@ -33,6 +33,16 @@ export type Database = {
           { foreignKeyName:"shipments_carrier_id_fkey"; columns:["carrier_id"]; isOneToOne:false; referencedRelation:"carriers"; referencedColumns:["id"] }
         ];
       };
+      shipment_status_events: {
+        Row: { id:string; shipment_id:string; user_id:string; changed_by:string|null; from_status:ShipmentStatus|null; to_status:ShipmentStatus; event_kind:"created"|"changed"|"baseline"; changed_at:string };
+        Insert: { id?:string; shipment_id:string; user_id:string; changed_by?:string|null; from_status?:ShipmentStatus|null; to_status:ShipmentStatus; event_kind:"created"|"changed"|"baseline"; changed_at?:string };
+        Update: Partial<Database["public"]["Tables"]["shipment_status_events"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName:"shipment_status_events_owner_fkey"; columns:["shipment_id","user_id"]; isOneToOne:false; referencedRelation:"shipments"; referencedColumns:["id","user_id"] },
+          { foreignKeyName:"shipment_status_events_user_id_fkey"; columns:["user_id"]; isOneToOne:false; referencedRelation:"profiles"; referencedColumns:["id"] },
+          { foreignKeyName:"shipment_status_events_changed_by_fkey"; columns:["changed_by"]; isOneToOne:false; referencedRelation:"profiles"; referencedColumns:["id"] }
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
