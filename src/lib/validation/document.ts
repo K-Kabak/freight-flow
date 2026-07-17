@@ -20,4 +20,3 @@ export const documentMetadataSchema = z.object({
     .min(1, "The file is empty.")
     .max(MAX_DOCUMENT_BYTES, "The file cannot exceed 6 MiB."),
 });
-
