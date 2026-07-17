@@ -1,24 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
+import { createLiveUser, signIn } from "./support/live-workspace";
 
 test.skip(process.env.SUPABASE_E2E !== "true", "Requires the local Supabase stack");
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYXNlLWRlbW8iLCJyb2xlIjoiYW5vbiIsImV4cCI6MTk4MzgxMjk5Nn0.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
-
 test("reporting currency and FX snapshots drive live analytics", async ({ page }) => {
   test.setTimeout(60_000);
-  const suffix = `${Date.now()}-${test.info().project.name}`;
-  const email = `report-${suffix}@example.com`;
-  const password = "FreightFlow123!";
-  const api = createClient(url, key, { auth: { persistSession: false } });
-  const { data: { user }, error } = await api.auth.signUp({ email, password });
-  expect(error).toBeNull();
-
-  await page.goto("/login");
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/dashboard/);
+  const account = await createLiveUser(test.info(), "reporting");
+  const { api, user } = account;
+  const suffix = crypto.randomUUID();
+  await signIn(page, account.email);
+  await expect(page.getByText("No shipments yet.")).toBeVisible();
   await expect(page.getByText("FR-001")).not.toBeVisible();
   await page.goto("/clients");
   await expect(page.getByText("IKEA Distribution")).not.toBeVisible();
@@ -31,8 +21,8 @@ test("reporting currency and FX snapshots drive live analytics", async ({ page }
 
   const clientId = crypto.randomUUID();
   const carrierId = crypto.randomUUID();
-  expect((await api.from("clients").insert({ id:clientId, user_id:user!.id, company_name:"FX Client", tax_id:"EU123", contact_person:"Finance", email:"finance@example.com", phone:"123456789" })).error).toBeNull();
-  expect((await api.from("carriers").insert({ id:carrierId, user_id:user!.id, company_name:"FX Carrier", country:"Germany", contact_person:"Dispatch", email:"dispatch@example.com", phone:"987654321", vehicle_type:"Curtainsider", rating:5 })).error).toBeNull();
+  expect((await api.from("clients").insert({ id:clientId, user_id:user.id, company_name:"FX Client", tax_id:"EU123", contact_person:"Finance", email:"finance@example.com", phone:"123456789" })).error).toBeNull();
+  expect((await api.from("carriers").insert({ id:carrierId, user_id:user.id, company_name:"FX Carrier", country:"Germany", contact_person:"Dispatch", email:"dispatch@example.com", phone:"987654321", vehicle_type:"Curtainsider", rating:5 })).error).toBeNull();
 
   await page.goto("/shipments/new");
   await page.getByLabel("Reference number").fill(`FX-${suffix}`);
@@ -59,5 +49,7 @@ test("reporting currency and FX snapshots drive live analytics", async ({ page }
   await page.goto("/settings");
   await page.getByLabel("Reporting currency").selectOption("PLN");
   await page.getByRole("button", { name:"Save settings" }).click();
-  await expect(page.getByText(/cannot be changed after shipments/)).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("alert").filter({ hasText: /cannot be changed after shipments/ }),
+  ).toBeVisible();
 });
