@@ -1,6 +1,6 @@
 # FreightFlow — roadmap produktu
 
-Stan roadmapy: zaakceptowana. Etapy 0–3 są zakończone i zweryfikowane. Trwa realizacja Etapu 4.
+Stan roadmapy: zaakceptowana. Etapy 0–4 są zakończone i zweryfikowane. Projekt jest gotowy do Etapu 5.
 
 ## Cel produktu
 
@@ -132,7 +132,7 @@ Wynik realizacji:
 
 ## Etap 4 — publikacja portfolio
 
-Status: w trakcie realizacji.
+Status: zakończony i zweryfikowany 17 lipca 2026 r.
 
 Zakres:
 
@@ -150,6 +150,16 @@ Kryteria akceptacji:
 - publiczny URL działa bez konfiguracji po stronie odwiedzającego;
 - demo nie ujawnia danych prywatnych i można je bezpiecznie odtworzyć;
 - CI jest zielone, README zawiera aktualny link i zrzuty.
+
+Wynik realizacji:
+
+- wszystkie cztery migracje wdrożono do hosted Supabase, a zdalny lint i pełna macierz RLS nie wykazują błędów;
+- produkcyjny Vercel korzysta wyłącznie z publicznego URL i publishable key, a callback Auth wskazuje dokładny publiczny adres aplikacji;
+- każdy odwiedzający może utworzyć izolowane konto i jednorazowo załadować deterministyczny workspace z 10 przesyłkami, 4 klientami i 4 przewoźnikami;
+- hosted E2E potwierdziło desktopowy CRUD, cykl przesyłki, Dashboard, Analytics, FX, izolację użytkowników i nawigację mobilną;
+- rejestracja, logowanie, chronione trasy, recovery oraz callback zmiany hasła zostały sprawdzone w produkcji;
+- README, rzeczywiste screenshoty, opis, topics i homepage repozytorium przedstawiają aktualny stan publicznego portfolio;
+- pełny lokalny zestaw jakości i GitHub Actions pozostają zielone.
 
 ## Etap 5 — funkcje wyróżniające
 
@@ -173,7 +183,7 @@ Poza zakresem pierwszego MVP pozostają automatyczne kursy walut, rozliczenia/fa
 
 ## Najbliższe priorytety
 
-Następnym krokiem jest Etap 4. Etap 3 nie pozostawia znanych braków blokujących publikację portfolio; produkcyjny Supabase, deployment i weryfikacja hostowanego środowiska pozostają zakresem Etapu 4.
+Następnym krokiem może być Etap 5. Etap 4 nie pozostawia znanych braków blokujących publiczną prezentację portfolio; dalsze funkcje powinny być wybierane według wartości produktu, bez przebudowy zweryfikowanych granic Auth i RLS.
 
 ## Standard Git i GitHub
 

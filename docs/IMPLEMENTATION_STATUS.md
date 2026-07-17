@@ -4,7 +4,76 @@ Data ostatniej pełnej weryfikacji: 17 lipca 2026 r.
 
 ## Status
 
-Etapy 0, 1, 2 i 3 są ukończone i zweryfikowane. Projekt jest gotowy do rozpoczęcia **Etapu 4 — publikacja portfolio**. Nie rozpoczęto implementacji Etapu 4 ani Etapu 5.
+Etapy 0, 1, 2, 3 i 4 są ukończone i zweryfikowane. FreightFlow działa jako publiczny projekt portfolio z hosted Supabase i produkcyjnym deploymentem Vercel. Projekt jest gotowy do rozpoczęcia **Etapu 5 — funkcje wyróżniające**; Etapu 5 jeszcze nie rozpoczęto.
+
+## Ukończony Etap 4
+
+### 4.1 — stan publikacji i strategia demo
+
+- Repozytorium rozpoczęło etap z `HEAD = origin/master = eefe0e7`; niezamierzone lokalne zmiany wraz z plikami untracked zabezpieczono w `stash@{0}` i nie przywracano ich do kodu Etapu 4.
+- Zamiast współdzielonego hasła każdy odwiedzający tworzy własne konto chronione RLS.
+- Puste konto może jednorazowo wywołać atomową funkcję `create_sample_workspace`, która tworzy 4 klientów, 4 przewoźników i 10 realistycznych przesyłek w PLN, EUR i USD.
+- Funkcja jest `security invoker`, respektuje RLS, blokuje wywołania anonimowe i ponowne seedowanie oraz nie zawiera identyfikatorów użytkowników ani danych logowania.
+
+### 4.2 — hosted Supabase
+
+- Repozytorium połączono z projektem `freight-flow` w regionie `eu-west-2`.
+- Wdrożono migracje `202607120001`, `202607160001`, `202607170001` i `202607170002`; lokalna i zdalna historia migracji są zgodne.
+- Hosted `db lint` nie wykazał błędów w schematach `extensions` ani `public`.
+- Auth używa produkcyjnego `site_url`, dokładnego callbacku Vercel i dwóch jawnych callbacków lokalnych; minimalna długość hasła wynosi 8 znaków.
+- Wyłączono nieużywane vector storage, które nie należy do zakresu aplikacji i wymagałoby płatnego planu.
+- Pełna macierz RLS uruchomiona przez publiczne Data API przeszła 3/3 testy, obejmując właściciela, obcego użytkownika, anonimową rolę, relacje cross-tenant oraz integralność walut i FX.
+
+### 4.3 — produkcyjny Vercel i Auth
+
+- Produkcja działa pod `https://freight-flow-tau.vercel.app` i używa hosted Supabase przez publiczny URL oraz publishable key przechowywane w Vercel.
+- Aplikacja nie korzysta z `service_role` ani innego prywatnego klucza.
+- Anonimowy użytkownik otrzymuje ekran logowania, a Dashboard i Analytics przekierowują do `/login`.
+- Rejestracja, logowanie, wylogowanie, żądanie recovery, callback, ustawienie nowego hasła i ponowne logowanie zostały zweryfikowane w hosted środowisku.
+- Błędny callback kończy się kontrolowanym przekierowaniem `invalid_callback`; odpowiedzi zachowują nagłówki bezpieczeństwa Etapu 3.
+
+### 4.4 — hosted E2E i urządzenia mobilne
+
+- Desktopowy hosted E2E potwierdza CRUD klientów i przewoźników, utworzenie, edycję, zmianę statusu i usunięcie przesyłki, Dashboard, Analytics oraz izolację dwóch kont.
+- Mobilny hosted E2E potwierdza logowanie, otwieranie dostępnej nawigacji i przejście do Analytics na profilu Pixel 7.
+- Osobny przebieg rekrutera potwierdził rejestrację w UI, utworzenie danych demo, obecność 10 przesyłek i blokadę ponownego seedowania.
+- Testy używają unikalnych kont i rekordów; dane biznesowe głównego hosted E2E są sprzątane w `finally`, bez maskowania problemów wieloma retry.
+
+### 4.5 — prezentacja portfolio i GitHub
+
+- README opisuje funkcje, architekturę, RLS, testy, setup lokalny, publiczne demo i sposób utworzenia prywatnych danych przykładowych.
+- Screenshoty Dashboard, Shipments i Analytics są generowane odtwarzalnym testem Playwright z rzeczywistego renderu i fikcyjnych danych.
+- Repozytorium GitHub ma aktualny opis, właściwe topics i homepage prowadzący do działającego demo; nie utworzono sztucznych issues ani milestone'ów.
+
+### 4.6 — końcowa weryfikacja
+
+| Kontrola | Wynik |
+| --- | --- |
+| `npm run lint` | PASS — 0 błędów |
+| `npm run typecheck` | PASS — 0 błędów TypeScript |
+| `npm test` | PASS — 11 plików, 34/34 testy |
+| `npm run build` | PASS — Next.js 16.2.10, 18 tras |
+| lokalny `npx supabase db reset` | PASS — wszystkie 4 migracje i seed globalny |
+| lokalny `npx supabase db lint --local` | PASS — brak błędów schematu |
+| lokalne E2E | PASS — 13/13 aktywnych; 3 jawnie bramkowane testy portfolio/hosted pominięte |
+| hosted E2E desktop/mobile | PASS — 2/2 |
+| hosted pełna macierz RLS | PASS — 3/3 |
+| hosted `npx supabase db lint --linked` | PASS — brak błędów schematu |
+| GitHub Actions dla `c955279` | PASS — `quality` i `e2e` |
+| `npm audit` | 0 high/critical, 2 moderate |
+| skan śledzonych plików pod kątem sekretów | PASS — brak dopasowań |
+
+## Commity Etapu 4
+
+- `89326a7 docs: start stage four publication`
+- `bb9e1f0 feat(demo): add isolated sample workspaces`
+- `b9472cc test(demo): verify isolated sample workspace setup`
+- `9e9e4f1 test(e2e): add hosted deployment verification`
+- `236b50b test(portfolio): make screenshots reproducible`
+- `43b31da docs(portfolio): refresh application screenshots`
+- `168d757 chore(auth): declare production redirect URLs`
+- `2ba151e fix(supabase): disable unused vector storage`
+- `c955279 test(e2e): match mobile navigation semantics`
 
 ## Ukończony Etap 3
 
@@ -95,7 +164,7 @@ Etapy 0, 1, 2 i 3 są ukończone i zweryfikowane. Projekt jest gotowy do rozpocz
 
 ## Znane ograniczenia
 
-- Publiczny deployment nadal działa jako read-only demo bez produkcyjnego Supabase. Hostowane środowisko i produkcyjna weryfikacja należą do Etapu 4.
+- Hosted Supabase używa domyślnej usługi e-mail. Recovery zweryfikowano end-to-end dla autoryzowanego adresu właściciela projektu, ale niezawodne doręczanie do dowolnych publicznych adresów wymagałoby skonfigurowania własnego SMTP.
 - `npm audit` zgłasza dwie podatności moderate dotyczące PostCSS `<8.5.10` dołączonego przez najnowszy stabilny Next.js 16.2.10. Npm proponuje wyłącznie nieakceptowalny downgrade do Next 9.3.3; brak podatności high i critical.
 - Agregacje katalogów i raportów nadal wymagają odczytu finansowych pól przesyłek użytkownika. Jest to świadoma decyzja dla skali MVP; dopiero pomiary na dużym zbiorze mogą uzasadnić agregacje PostgreSQL.
 - Nie dodano własnego rate limitera, ponieważ aplikacja nie ma niestandardowego publicznego endpointu, dla którego przyniósłby mierzalną ochronę; auth korzysta z ograniczeń dostawcy Supabase.
@@ -103,3 +172,7 @@ Etapy 0, 1, 2 i 3 są ukończone i zweryfikowane. Projekt jest gotowy do rozpocz
 ## Elementy niedokończone w Etapie 3
 
 Brak znanych elementów niedokończonych blokujących kryteria Etapu 3. Dwie podatności moderate są jawnie udokumentowanym ograniczeniem zależności bez bezpiecznej dostępnej aktualizacji.
+
+## Elementy niedokończone w Etapie 4
+
+Brak elementów blokujących publikację portfolio. Własny SMTP i bezpieczna przyszła aktualizacja zależności są udokumentowanymi zadaniami operacyjnymi, ale nie obniżają jakości demonstracji podstawowych przepływów FreightFlow.
