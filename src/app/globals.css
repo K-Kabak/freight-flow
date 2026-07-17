@@ -21,4 +21,8 @@ body {
 
 button, a { -webkit-tap-highlight-color: transparent; }
 button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 ::selection { background: #c8ece2; color: #104b3d; }
