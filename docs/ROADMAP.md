@@ -99,7 +99,7 @@ Kryteria akceptacji:
 
 ## Etap 3 — jakość, bezpieczeństwo i odporność
 
-Status: planowany.
+Status: zakończony i zweryfikowany 17 lipca 2026 r.
 
 Zakres:
 
@@ -108,9 +108,9 @@ Zakres:
 - pełna macierz testów integracyjnych RLS dla SELECT/INSERT/UPDATE/DELETE;
 - E2E krytycznych przepływów klientów, przewoźników, przesyłek i raportów;
 - dostępność klawiaturowa, focus management i kontrola kontrastu;
-- rate limiting i bezpieczna obsługa błędów dla wrażliwych endpointów;
+- ocena rate limitingu i bezpieczna obsługa błędów dla wrażliwych operacji;
 - przegląd zależności, nagłówków bezpieczeństwa i logowania błędów;
-- poprawa wydajności zapytań, indeksów i bundle size;
+- pomiar wydajności zapytań, użycia indeksów i bundle size oraz celowane poprawki;
 - stabilne dane testowe oraz procedura resetu środowiska.
 
 Kryteria akceptacji:
@@ -118,6 +118,17 @@ Kryteria akceptacji:
 - krytyczne scenariusze mają automatyczne testy regresji;
 - brak znanych problemów bezpieczeństwa o wysokiej wadze;
 - podstawowe widoki spełniają wymagania dostępności i wydajności portfolio demo.
+
+Wynik realizacji:
+
+- callback auth akceptuje wyłącznie bezpieczne ścieżki względne, a odpowiedzi mają bazowe nagłówki ochronne;
+- uprawnienia profilu, integralność waluty raportowej i snapshotów FX są wymuszane również w PostgreSQL;
+- pełna macierz RLS obejmuje SELECT/INSERT/UPDATE/DELETE, użytkowników obcych i rolę anonimową;
+- obliczenia finansowe, formularze, stany błędów, semantyka i krytyczne przepływy klawiaturowe mają testy regresji;
+- GitHub Actions uruchamia jako osobne bramki jakość aplikacji oraz szeregowe E2E na minimalnym lokalnym Supabase po `db reset` i `db lint`;
+- pomiary nie uzasadniły nowych indeksów, przenoszenia agregacji do PostgreSQL ani przebudowy bundla; usunięto natomiast `select(*)` i odczyty całych katalogów w widokach szczegółowych;
+- nie dodano własnego rate limitera: aplikacja nie wystawia niestandardowego publicznego endpointu wymagającego tej warstwy, a operacje auth korzystają z ochrony Supabase;
+- `npm audit` nie wykazuje podatności high ani critical; pozostają dwie moderate w PostCSS dołączonym przez najnowszy stabilny Next.js, bez bezpiecznej aktualizacji oferowanej przez npm.
 
 ## Etap 4 — publikacja portfolio
 
@@ -162,7 +173,7 @@ Poza zakresem pierwszego MVP pozostają automatyczne kursy walut, rozliczenia/fa
 
 ## Najbliższe priorytety
 
-Następnym krokiem jest Etap 3. Priorytety obejmują rozszerzenie macierzy testów RLS, testy komponentów formularzy, przegląd dostępności, bezpieczeństwa i wydajności oraz przygotowanie stabilnego środowiska E2E w CI.
+Następnym krokiem jest Etap 4. Etap 3 nie pozostawia znanych braków blokujących publikację portfolio; produkcyjny Supabase, deployment i weryfikacja hostowanego środowiska pozostają zakresem Etapu 4.
 
 ## Standard Git i GitHub
 

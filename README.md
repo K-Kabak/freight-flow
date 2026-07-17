@@ -4,17 +4,18 @@ FreightFlow is a portfolio-grade transport management dashboard for dispatchers 
 
 ## Current status
 
-FreightFlow now includes a complete locally verified mini-TMS. The deployed portfolio demo remains a read-only sample until a hosted Supabase project is provisioned.
+FreightFlow now includes a quality-hardened, locally verified mini-TMS. Stage 3 added database invariants, a complete RLS operation matrix, deterministic financial calculations, accessible error and keyboard workflows, and Supabase-backed E2E in CI. The deployed portfolio demo remains a read-only sample until a hosted Supabase project is provisioned.
 
 | Area | Status |
 | --- | --- |
 | Responsive dashboard, tables and charts | Live with Supabase; sample data in public demo |
 | Shipment CRUD, server search, filters, sorting and pagination | Working with Supabase configured |
-| Supabase schema, grants and row-level security | Implemented and tested locally |
+| Supabase schema, grants and row-level security | Full CRUD matrix and tenant isolation tested locally and in CI |
 | Email/password auth, recovery and sign-out | Working with Supabase configured |
 | Shipment create, read, edit, status update and delete | Working with Supabase configured |
 | Client and carrier CRUD, ratings, statistics and related shipments | Working with Supabase configured |
-| Live Dashboard, Analytics and saved FX conversion | Working with Supabase configured |
+| Live Dashboard, Analytics and saved FX conversion | Deterministic rounding and currency invariants tested |
+| GitHub Actions | Lint, types, unit tests, build, Supabase reset/lint and E2E |
 | CSV/PDF export | Planned |
 
 ## Tech stack
@@ -24,7 +25,7 @@ Next.js 16, TypeScript, Tailwind CSS 4, Supabase/PostgreSQL, Recharts, Zod, Vite
 ## Getting started
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 npx supabase start
 npm run dev
@@ -61,17 +62,25 @@ npm run test:e2e
 The authenticated CRUD and RLS suite requires the local Supabase stack:
 
 ```powershell
+npx supabase db reset
+npx supabase db lint --local
 $env:SUPABASE_E2E="true"
 npm run test:e2e -- --workers=1
 ```
 
+CI starts only the Supabase services required by Auth, PostgREST and PostgreSQL, resets the database from migrations, lints the schema and runs Playwright serially for repeatability.
+
 ## Data security
 
-Every business record is owned by a Supabase Auth user. PostgreSQL row-level security isolates profiles, clients, carriers and shipments. Cross-user client/carrier relationships are rejected, while restrictive foreign keys preserve historical shipment integrity.
+Every business record is owned by a Supabase Auth user. PostgreSQL row-level security and explicit table grants isolate profiles, clients, carriers and shipments across SELECT, INSERT, UPDATE and DELETE. Cross-user relationships are rejected, profile updates are column-limited, and database triggers preserve reporting-currency and FX snapshot integrity.
 
 ## Deployment
 
-Deploy to Vercel, configure both public Supabase environment variables, then register the Vercel callback URL in Supabase Auth. GitHub Actions validates linting, types, unit tests and the production build.
+Deploy to Vercel, configure both public Supabase environment variables, then register the Vercel callback URL in Supabase Auth. GitHub Actions validates linting, types, unit tests, the production build and the complete local-Supabase E2E suite.
+
+## Known dependency limitation
+
+`npm audit` currently reports no high or critical vulnerabilities and two moderate findings in the PostCSS version bundled by the latest stable Next.js 16.2.10. The automated fix would downgrade Next.js to 9.3.3, so it is intentionally not applied; the advisory should be revisited when a safe stable upgrade is available.
 
 ## Demo
 
