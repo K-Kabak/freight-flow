@@ -5,11 +5,16 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { carrierFormSchema, clientFormSchema } from "@/lib/validation/directory";
+import { documentMetadataSchema } from "@/lib/validation/document";
 import { shipmentFormSchema } from "@/lib/validation/shipment";
 
 export type ActionResult =
   | { ok: true }
   | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
+
+export type DocumentPreparationResult =
+  | { ok: true; document: { id: string; storagePath: string } }
+  | { ok: false; message: string };
 
 const idSchema = z.string().uuid();
 
@@ -132,10 +137,109 @@ export async function deleteShipment(shipmentId: string): Promise<ActionResult> 
       .maybeSingle();
     if (error) {
       logActionError("deleteShipment.mutation", error);
-      return { ok: false, message: "The shipment could not be deleted." };
+      return {
+        ok: false,
+        message:
+          error.code === "23503"
+            ? "Delete shipment documents before deleting the shipment."
+            : "The shipment could not be deleted.",
+      };
     }
     if (!data) return { ok: false, message: "The shipment is unavailable." };
     refreshShipments();
+    return { ok: true };
+  });
+}
+
+export async function prepareShipmentDocument(input: {
+  shipmentId: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+}): Promise<DocumentPreparationResult> {
+  try {
+    const parsed = documentMetadataSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid document." };
+    }
+    const session = await auth();
+    if (!session) return { ok: false, message: "Your session expired. Sign in again." };
+
+    const documentId = crypto.randomUUID();
+    const storagePath = `${session.user.id}/${parsed.data.shipmentId}/${documentId}`;
+    const { data, error } = await session.supabase
+      .from("shipment_documents")
+      .insert({
+        id: documentId,
+        shipment_id: parsed.data.shipmentId,
+        storage_path: storagePath,
+        original_name: parsed.data.originalName,
+        mime_type: parsed.data.mimeType,
+        size_bytes: parsed.data.sizeBytes,
+      })
+      .select("id,storage_path")
+      .single();
+    if (error) {
+      logActionError("prepareShipmentDocument.mutation", error);
+      return { ok: false, message: "The document upload could not be prepared." };
+    }
+    return { ok: true, document: { id: data.id, storagePath: data.storage_path } };
+  } catch (error) {
+    logActionError("prepareShipmentDocument", error);
+    return { ok: false, message: "The document upload could not be prepared." };
+  }
+}
+
+export async function finalizeShipmentDocument(documentId: string): Promise<ActionResult> {
+  return safely("finalizeShipmentDocument", async () => {
+    const parsed = idSchema.safeParse(documentId);
+    if (!parsed.success) return { ok: false, message: "Invalid document." };
+    const session = await auth();
+    if (!session) return { ok: false, message: "Your session expired. Sign in again." };
+    const { error } = await session.supabase.rpc("finalize_shipment_document", {
+      document_id: parsed.data,
+    });
+    if (error) {
+      logActionError("finalizeShipmentDocument.mutation", error);
+      return { ok: false, message: "The uploaded document could not be finalized." };
+    }
+    revalidatePath("/shipments/[id]", "page");
+    return { ok: true };
+  });
+}
+
+export async function deleteShipmentDocument(documentId: string): Promise<ActionResult> {
+  return safely("deleteShipmentDocument", async () => {
+    const parsed = idSchema.safeParse(documentId);
+    if (!parsed.success) return { ok: false, message: "Invalid document." };
+    const session = await auth();
+    if (!session) return { ok: false, message: "Your session expired. Sign in again." };
+    const { data: document, error: readError } = await session.supabase
+      .from("shipment_documents")
+      .select("id,shipment_id,storage_path")
+      .eq("id", parsed.data)
+      .maybeSingle();
+    if (readError) {
+      logActionError("deleteShipmentDocument.read", readError);
+      return { ok: false, message: "The document could not be deleted." };
+    }
+    if (!document) return { ok: false, message: "The document is unavailable." };
+
+    const { error: storageError } = await session.supabase.storage
+      .from("shipment-documents")
+      .remove([document.storage_path]);
+    if (storageError) {
+      logActionError("deleteShipmentDocument.storage", storageError);
+      return { ok: false, message: "The stored file could not be deleted." };
+    }
+    const { error } = await session.supabase.rpc("delete_shipment_document_metadata", {
+      document_id: parsed.data,
+    });
+    if (error) {
+      logActionError("deleteShipmentDocument.mutation", error);
+      return { ok: false, message: "The document could not be deleted." };
+    }
+    revalidatePath(`/shipments/${document.shipment_id}`);
     return { ok: true };
   });
 }

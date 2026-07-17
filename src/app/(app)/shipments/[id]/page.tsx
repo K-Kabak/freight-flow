@@ -1,2 +1,45 @@
-import { notFound } from "next/navigation"; import { PageHeader } from "@/components/page-header"; import { ShipmentForm } from "@/components/shipments/shipment-form"; import { ShipmentStatusTimeline } from "@/components/shipments/shipment-status-timeline"; import { getDirectoryOptions,getShipment,getShipmentStatusEvents } from "@/lib/data/shipments";
-export default async function EditShipmentPage({params}:{params:Promise<{id:string}>}){const{id}=await params;const[{shipment,isDemo},{clients,carriers,reportingCurrency},events]=await Promise.all([getShipment(id),getDirectoryOptions(),getShipmentStatusEvents(id)]);if(!shipment)notFound();return <><PageHeader title={`${isDemo?"View":"Edit"} ${shipment.referenceNumber}`} description={isDemo?"Read-only demo shipment.":"Update operational details, pricing or status."}/><div className="space-y-6"><ShipmentForm shipment={shipment} clients={clients} carriers={carriers} reportingCurrency={reportingCurrency} isDemo={isDemo}/>{!isDemo&&<ShipmentStatusTimeline events={events}/>}</div></>}
+import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/page-header";
+import { ShipmentDocuments } from "@/components/shipments/shipment-documents";
+import { ShipmentForm } from "@/components/shipments/shipment-form";
+import { ShipmentStatusTimeline } from "@/components/shipments/shipment-status-timeline";
+import {
+  getDirectoryOptions,
+  getShipment,
+  getShipmentDocuments,
+  getShipmentStatusEvents,
+} from "@/lib/data/shipments";
+
+export default async function EditShipmentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const [{ shipment, isDemo }, { clients, carriers, reportingCurrency }, events, documents] =
+    await Promise.all([
+      getShipment(id),
+      getDirectoryOptions(),
+      getShipmentStatusEvents(id),
+      getShipmentDocuments(id),
+    ]);
+  if (!shipment) notFound();
+
+  return (
+    <>
+      <PageHeader
+        title={`${isDemo ? "View" : "Edit"} ${shipment.referenceNumber}`}
+        description={
+          isDemo ? "Read-only demo shipment." : "Update operational details, pricing or status."
+        }
+      />
+      <div className="space-y-6">
+        <ShipmentForm
+          shipment={shipment}
+          clients={clients}
+          carriers={carriers}
+          reportingCurrency={reportingCurrency}
+          isDemo={isDemo}
+        />
+        {!isDemo ? <ShipmentDocuments shipmentId={id} documents={documents} /> : null}
+        {!isDemo ? <ShipmentStatusTimeline events={events} /> : null}
+      </div>
+    </>
+  );
+}

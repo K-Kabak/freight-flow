@@ -1,6 +1,6 @@
 import { carriers as demoCarriers, clients as demoClients, shipments as demoShipments } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import type { Shipment, ShipmentStatusEvent } from "@/types";
+import type { Shipment, ShipmentDocument, ShipmentStatusEvent } from "@/types";
 import type { Database } from "@/types/database";
 
 type ShipmentRow = Database["public"]["Tables"]["shipments"]["Row"];
@@ -203,6 +203,33 @@ export async function getShipmentStatusEvents(
     actor: event.actor
       ? { fullName: event.actor.full_name, email: event.actor.email }
       : null,
+  }));
+}
+
+export async function getShipmentDocuments(shipmentId: string): Promise<ShipmentDocument[]> {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("shipment_documents")
+    .select(
+      "id,shipment_id,storage_path,original_name,mime_type,size_bytes,upload_status,created_at,uploaded_at",
+    )
+    .eq("shipment_id", shipmentId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
+  if (error) throw new Error("Unable to load shipment documents");
+
+  return (data ?? []).map((document) => ({
+    id: document.id,
+    shipmentId: document.shipment_id,
+    storagePath: document.storage_path,
+    originalName: document.original_name,
+    mimeType: document.mime_type,
+    sizeBytes: document.size_bytes,
+    status: document.upload_status,
+    createdAt: document.created_at,
+    uploadedAt: document.uploaded_at,
   }));
 }
 
