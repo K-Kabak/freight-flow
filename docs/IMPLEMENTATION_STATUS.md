@@ -4,7 +4,94 @@ Data ostatniej pełnej weryfikacji: 17 lipca 2026 r.
 
 ## Status
 
-Etapy 0, 1, 2, 3 i 4 są ukończone i zweryfikowane. FreightFlow działa jako publiczny projekt portfolio z hosted Supabase i produkcyjnym deploymentem Vercel. Projekt jest gotowy do rozpoczęcia **Etapu 5 — funkcje wyróżniające**; Etapu 5 jeszcze nie rozpoczęto.
+Etapy 0, 1, 2, 3, 4 i 5 są ukończone i zweryfikowane. FreightFlow działa jako publiczny projekt portfolio z hosted Supabase i produkcyjnym deploymentem Vercel. Wersja 1.1 domyka aktywny rozwój funkcjonalny; dalsze elementy roadmapy pozostają opcjonalnym backlogiem.
+
+## Ukończony Etap 5
+
+### 5.0 — bezpieczne domknięcie Etapu 4
+
+- Ponownie potwierdzono hash i zawartość stasha bezpieczeństwa utworzonego przed Etapem 4; zawierał wyłącznie nieaktualne regresje i nie zawierał wartościowego drzewa untracked.
+- Usunięto wyłącznie zweryfikowany stash, bez przywracania jakiejkolwiek jego części.
+- Potwierdzono istniejący tag i GitHub Release `v1.0.0` dla zakończonego Etapu 4.
+
+### 5.1 — automatyczna historia statusów
+
+- Migracja `202607170003_add_shipment_status_events.sql` dodaje tabelę `shipment_status_events`, w której `user_id` oznacza właściciela danych/workspace'u, a `changed_by` użytkownika wykonującego zmianę.
+- Kompozycyjny klucz obcy `(shipment_id, user_id)` wymusza, że właściciel zdarzenia zawsze odpowiada właścicielowi przesyłki; trigger ustawia oba pola i klient nie może nimi manipulować.
+- Trigger PostgreSQL zapisuje zmianę również wykonaną bezpośrednio przez Data API. INSERT przesyłki tworzy jedno zdarzenie `created`, rzeczywista zmiana statusu jedno `changed`, a zapis tego samego statusu lub innych pól nie tworzy zdarzenia.
+- Zdarzenia są nieedytowalne: authenticated ma wyłącznie SELECT własnych rekordów, a INSERT/UPDATE/DELETE są odebrane. Timeline pokazuje chronologię, status i aktora albo jawne zdarzenie systemowe.
+
+### 5.2 — prywatne dokumenty transportowe
+
+- Migracja `202607170004_add_shipment_documents.sql` tworzy prywatny bucket `shipment-documents`, tabelę metadanych, polityki Storage RLS i indeks listowania dokumentów przesyłki.
+- Ścieżka obiektu ma postać `{ownerId}/{shipmentId}/{documentId}` i jest powiązana z istniejącą, własną przesyłką. Bucket oraz baza akceptują wyłącznie PDF/JPEG/PNG do 6 MiB.
+- Przeglądarka wysyła plik bezpośrednio do Supabase Storage. Aplikacja nie używa `service_role`, publicznych URL-i ani Vercel Function jako proxy pliku.
+- Metadane zaczynają w stanie `pending`; funkcja `finalize_shipment_document` przełącza je na `ready` dopiero po potwierdzeniu obiektu i właściciela w Storage. Klient nie ma uprawnienia UPDATE ani możliwości wstawienia rekordu jako `ready`.
+- Usuwanie najpierw usuwa obiekt, a następnie wywołuje funkcję, która odmawia usunięcia metadanych, jeżeli obiekt nadal istnieje. Przesyłki z dokumentami są chronione przed przypadkowym usunięciem.
+- Testy owner/stranger/anon obejmują upload, finalizację, odczyt, download, delete, zły MIME, przekroczenie limitu, próbę wymuszenia `ready` i izolację metadanych oraz obiektów.
+
+### 5.3 — CSV i Print / Save as PDF
+
+- Eksport `/shipments/export` działa w uwierzytelnionej sesji, przez RLS, obejmuje wszystkie rekordy zgodne z aktywnymi filtrami `q`, `status` i `sort` oraz pobiera je stabilnie w partiach.
+- Każde pole tekstowe CSV jest cytowane, a wartości rozpoczynające się po białych znakach od `=`, `+`, `-` lub `@` otrzymują bezpieczny prefiks chroniący przed CSV formula injection.
+- Prywatny widok `/shipments/[id]/summary` przedstawia trasę, strony, daty, status, finanse, snapshot FX i notatki w układzie A4.
+- PDF jest realizowany przez natywny mechanizm przeglądarki Print / Save as PDF. Nie dodano biblioteki ani serwerowego generatora PDF.
+- E2E potwierdza filtrowanie CSV, brak danych drugiego użytkownika, neutralizację formuł, prywatność podsumowania i wywołanie drukowania.
+
+### 5.4 — hosted rollout i zamknięcie
+
+- Migracje `202607170003` i `202607170004` wdrożono do linked hosted Supabase; lokalna i zdalna historia migracji są zgodne, a hosted `db lint` nie zgłasza błędów.
+- Produkcyjny deployment Vercel jest gotowy i przypięty do `https://freight-flow-tau.vercel.app`.
+- Hosted E2E historii, dokumentów, CSV i podsumowania przeszło 3/3. Dane biznesowe tymczasowych kont są sprzątane własnym tokenem użytkownika, bez uprawnień administracyjnych.
+- CI uruchamia Storage razem z minimalnym Supabase, dzięki czemu test dokumentów nie jest pomijany ani maskowany retry.
+- Screenshoty Dashboardu, listy przesyłek, Analytics, szczegółów z dokumentem/timeline oraz podsumowania są generowane przez Playwright.
+- Release `v1.1.0` wskazuje zweryfikowany commit zamykający Etap 5.
+
+### Końcowa weryfikacja Etapu 5
+
+| Kontrola | Wynik |
+| --- | --- |
+| `npm run lint` | PASS — 0 błędów |
+| `npm run typecheck` | PASS — 0 błędów TypeScript |
+| `npm test` | PASS — 16 plików, 52/52 testy |
+| `npm run build` | PASS — Next.js 16.2.10, 19 tras |
+| lokalny `npx supabase db reset` | PASS — wszystkie 6 migracji i seed globalny |
+| lokalny `npx supabase db lint --local` | PASS — brak błędów schematu |
+| lokalne E2E | PASS — 16/16 aktywnych; 3 jawnie bramkowane testy hosted/screenshot pominięte |
+| hosted E2E Etapu 5 | PASS — historia, dokumenty, CSV i podsumowanie, 3/3 |
+| hosted `npx supabase db lint --linked` | PASS — brak błędów schematu |
+| screenshot workflow | PASS — 1/1, pięć aktualnych ekranów |
+| GitHub Actions | PASS — `quality` i Storage-backed `e2e` |
+| `npm audit` | 0 high/critical, 2 moderate |
+| skan śledzonych plików pod kątem sekretów | PASS — brak dopasowań |
+
+### Commity Etapu 5
+
+- `2ccf557 feat(database): add shipment status audit trail`
+- `0bdd93c chore(database): normalize audit migration`
+- `9c3014f feat(shipments): render status history timeline`
+- `427dd09 test(security): verify immutable status history`
+- `fb2b2c4 feat(storage): add private shipment document model`
+- `07a3290 chore(storage): normalize document validation`
+- `40a6252 feat(shipments): manage private transport documents`
+- `cda5f14 test(security): verify private document isolation`
+- `dbbd297 feat(shipments): export filtered shipments as safe CSV`
+- `8323717 feat(shipments): add printable order summary`
+- `a1fa5e4 test(e2e): verify private exports and summaries`
+- `e08bd9c test(e2e): stabilize hosted feature verification`
+- `1d69c2b docs(portfolio): showcase stage five features`
+- końcowy commit dokumentacyjny aktualizujący media, README, roadmapę i ten raport.
+
+### Znane ograniczenia Etapu 5
+
+- Kontrola typu pliku opiera się na dozwolonym MIME deklarowanym przy uploadzie i prywatnym modelu zaufania właściciela; aplikacja nie wykonuje skanowania antywirusowego ani analizy sygnatur pliku.
+- Limit pojedynczego dokumentu wynosi świadomie 6 MiB, a upload nie ma wznawiania fragmentowego. Jest to adekwatne dla PDF/JPEG/PNG w portfolio mini-TMS.
+- Save as PDF korzysta z możliwości przeglądarki i nie tworzy archiwalnego, podpisanego dokumentu serwerowego.
+- Hosted testy tworzą unikalne konta Auth; ich dane biznesowe są sprzątane, ale samodzielne usunięcie konta Auth nie jest udostępnione klientowi bez uprawnień administracyjnych.
+
+### Elementy niedokończone w Etapie 5
+
+Brak elementów niedokończonych w zaakceptowanym zakresie 5.0–5.4. Mapy, public tracking, role admin/dispatcher, komentarze, powiadomienia i dark mode świadomie pozostają poza zakresem i nie są wymagane do zamknięcia aktywnego rozwoju funkcjonalnego.
 
 ## Ukończony Etap 4
 

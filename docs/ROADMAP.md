@@ -1,6 +1,6 @@
 # FreightFlow — roadmap produktu
 
-Stan roadmapy: zaakceptowana. Etapy 0–4 są zakończone i zweryfikowane. Projekt jest gotowy do Etapu 5.
+Stan roadmapy: Etapy 0–5 są zakończone i zweryfikowane. FreightFlow osiągnął zamknięty zakres funkcjonalny portfolio w wersji 1.1.
 
 ## Cel produktu
 
@@ -163,13 +163,32 @@ Wynik realizacji:
 
 ## Etap 5 — funkcje wyróżniające
 
-Status: backlog po MVP.
+Status: zakończony i zweryfikowany 17 lipca 2026 r.
 
-Priorytetowe rozszerzenia:
+Zrealizowany zakres:
 
-1. Historia zmian statusu z osią czasu i użytkownikiem wykonującym zmianę.
-2. Dokumenty transportowe w Supabase Storage z kontrolą dostępu.
-3. Eksport CSV/PDF i profesjonalne podsumowanie zlecenia.
+1. Automatyczna, nieedytowalna historia statusów z osią czasu, właścicielem workspace'u i odrębnym użytkownikiem wykonującym zmianę.
+2. Prywatne dokumenty transportowe w Supabase Storage z limitem 6 MiB, kontrolą PDF/JPEG/PNG, przepływem `pending → ready` i izolacją owner/stranger/anon.
+3. Eksport CSV respektujący aktualne filtry i RLS, z ochroną przed CSV formula injection.
+4. Profesjonalny widok podsumowania zlecenia korzystający z natywnego Print / Save as PDF zamiast generatora PDF.
+5. Hosted rollout do Supabase i Vercel, lokalne oraz hosted E2E, aktualne screenshoty i release `v1.1.0`.
+
+Kryteria akceptacji:
+
+- każda rzeczywista zmiana statusu, również przez Data API, tworzy dokładnie jedno zdarzenie, a historia nie jest zapisywalna przez klienta;
+- prywatny bucket i metadane dokumentów nie ujawniają danych innemu użytkownikowi ani roli anonimowej;
+- upload nie jest gotowy przed poprawnym przejściem `pending → ready`, a klient nie może sam wymusić tego stanu;
+- CSV obejmuje wyłącznie dane bieżącego użytkownika zgodne z filtrami i neutralizuje tekst mogący uruchomić formułę;
+- podsumowanie zlecenia jest prywatne, czytelne na ekranie i przygotowane do wydruku A4;
+- lokalne kontrole, GitHub Actions i testy hosted są zielone.
+
+Wynik realizacji:
+
+- migracja `202607170003_add_shipment_status_events.sql` dodaje audyt statusów wymuszany triggerem PostgreSQL oraz kompozycyjnym kluczem właściciela przesyłki;
+- migracja `202607170004_add_shipment_documents.sql` dodaje prywatny bucket, metadane dokumentów, Storage RLS oraz bezpieczne funkcje finalizacji i usuwania metadanych;
+- aplikacja nie używa publicznych URL-i Storage, `service_role`, proxy plików przez Vercel ani natywnego generatora PDF;
+- agregacje Dashboardu i Analytics pozostały w sprawdzonej warstwie serwerowej TypeScript, ponieważ Etap 5 nie wykazał problemu uzasadniającego zmianę architektury;
+- zakres został wdrożony bez nowych zależności, własnego rate limitera, dodatkowych ról i funkcji spoza zaakceptowanego planu.
 
 Dalszy backlog:
 
@@ -181,9 +200,9 @@ Dalszy backlog:
 
 Poza zakresem pierwszego MVP pozostają automatyczne kursy walut, rozliczenia/fakturowanie, telematyka i rozbudowane zarządzanie flotą.
 
-## Najbliższe priorytety
+## Dalszy rozwój
 
-Następnym krokiem może być Etap 5. Etap 4 nie pozostawia znanych braków blokujących publiczną prezentację portfolio; dalsze funkcje powinny być wybierane według wartości produktu, bez przebudowy zweryfikowanych granic Auth i RLS.
+Aktywny rozwój funkcjonalny może zostać zakończony po wersji 1.1. Pozostałe pomysły nie są wymagane do jakości portfolio i powinny wrócić do planu wyłącznie po pojawieniu się rzeczywistej potrzeby produktu lub pomiarów uzasadniających ich koszt.
 
 ## Standard Git i GitHub
 

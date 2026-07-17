@@ -4,7 +4,7 @@ FreightFlow is a portfolio-grade transport management dashboard for dispatchers 
 
 ## Current status
 
-FreightFlow is a published, portfolio-ready mini-TMS backed by hosted Supabase and deployed on Vercel. Visitors can create an isolated account, load a deterministic sample workspace and evaluate the complete application without local configuration.
+FreightFlow is a published, portfolio-ready mini-TMS backed by hosted Supabase and deployed on Vercel. Visitors can create an isolated account, load a deterministic sample workspace and evaluate the complete application without local configuration. Version 1.1 adds immutable shipment status history, private transport documents and secure exports.
 
 | Area | Status |
 | --- | --- |
@@ -13,10 +13,12 @@ FreightFlow is a published, portfolio-ready mini-TMS backed by hosted Supabase a
 | Supabase schema, grants and row-level security | Full CRUD matrix and tenant isolation verified locally and hosted |
 | Email/password auth, recovery and sign-out | Production verified |
 | Shipment create, read, edit, status update and delete | Production verified |
+| Immutable shipment status timeline with actor attribution | Production verified |
+| Private transport documents in Supabase Storage | Owner/stranger/anonymous access verified locally and hosted |
 | Client and carrier CRUD, ratings, statistics and related shipments | Production verified |
 | Live Dashboard, Analytics and saved FX conversion | Deterministic rounding and currency invariants tested |
 | GitHub Actions | Lint, types, unit tests, build, Supabase reset/lint and E2E |
-| CSV/PDF export | Planned |
+| Filter-aware CSV and Print / Save as PDF order summary | Production verified |
 
 ## Tech stack
 
@@ -24,7 +26,9 @@ Next.js 16, TypeScript, Tailwind CSS 4, Supabase/PostgreSQL, Recharts, Zod, Vite
 
 ## Architecture
 
-Next.js App Router renders authenticated views and executes validated server actions. Supabase Auth owns sessions, while PostgreSQL stores profiles, clients, carriers and shipments. Explicit grants, row-level security and database constraints enforce ownership, cross-tenant relationship safety and reporting-currency invariants independently of the UI. Financial reporting uses saved FX snapshots and deterministic server-side TypeScript aggregation appropriate for the portfolio dataset.
+Next.js App Router renders authenticated views and executes validated server actions. Supabase Auth owns sessions, while PostgreSQL stores profiles, clients, carriers, shipments, immutable status events and document metadata. Explicit grants, row-level security, triggers and database constraints enforce ownership, cross-tenant relationship safety, audit integrity and reporting-currency invariants independently of the UI.
+
+Private documents upload directly from the authenticated browser to Supabase Storage; file bytes never pass through a Vercel Function. A database-backed `pending` to `ready` transition prevents incomplete uploads from being presented as complete. Financial reporting uses saved FX snapshots and deterministic server-side TypeScript aggregation appropriate for the portfolio dataset.
 
 ## Getting started
 
@@ -72,21 +76,25 @@ $env:SUPABASE_E2E="true"
 npm run test:e2e -- --workers=1
 ```
 
-CI starts only the Supabase services required by Auth, PostgREST and PostgreSQL, resets the database from migrations, lints the schema and runs Playwright serially for repeatability.
+CI starts only the Supabase services required by Auth, Storage, PostgREST and PostgreSQL, resets the database from migrations, lints the schema and runs Playwright serially for repeatability.
 
 ## Data security
 
-Every business record is owned by a Supabase Auth user. PostgreSQL row-level security and explicit table grants isolate profiles, clients, carriers and shipments across SELECT, INSERT, UPDATE and DELETE. Cross-user relationships are rejected, profile updates are column-limited, and database triggers preserve reporting-currency and FX snapshot integrity.
+Every business record is owned by a Supabase Auth user. PostgreSQL row-level security and explicit table grants isolate profiles, clients, carriers, shipments, status events and document metadata. Cross-user relationships are rejected, profile updates are column-limited, and database triggers preserve reporting-currency, FX snapshot and status-history integrity.
+
+The `shipment-documents` bucket is private. Object policies require an owned shipment and matching pending metadata, while finalization verifies the stored object before exposing it as ready. The application uses authenticated Storage requests only: no public URLs, `service_role` key or file proxy. CSV export runs under the caller's RLS session, preserves active filters and neutralizes formula-like text values.
 
 ## Deployment
 
 Production runs on Vercel with a hosted Supabase project. Vercel stores only the public project URL and publishable client key; privileged Supabase keys are not used by the application. Auth permits the exact production callback plus local development callbacks. GitHub Actions validates linting, types, unit tests, the production build and the complete local-Supabase E2E suite.
 
-## Known dependency limitation
+## Known limitations
 
 `npm audit` currently reports no high or critical vulnerabilities and two moderate findings in the PostCSS version bundled by the latest stable Next.js 16.2.10. The automated fix would downgrade Next.js to 9.3.3, so it is intentionally not applied; the advisory should be revisited when a safe stable upgrade is available.
 
 The hosted project currently uses Supabase's default email service. Password recovery was verified end to end for the project owner's authorized address, but a custom SMTP provider would be required for dependable delivery to arbitrary public addresses.
+
+Document uploads intentionally accept only declared PDF/JPEG/PNG MIME types up to 6 MiB. The portfolio deployment does not include antivirus scanning, content-signature inspection or resumable uploads. Save as PDF uses the browser print engine rather than generating a signed archival PDF on the server.
 
 ## Demo
 
@@ -106,6 +114,10 @@ Every account receives a private workspace protected by RLS. Sample data is crea
 <summary>More screens</summary>
 
 ![Shipment management](public/screenshots/shipments.png)
+
+![Shipment details with private documents and status history](public/screenshots/shipment-details.png)
+
+![Printable transport order summary](public/screenshots/shipment-summary.png)
 
 ![Freight analytics](public/screenshots/analytics.png)
 </details>
