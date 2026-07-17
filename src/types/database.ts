@@ -35,7 +35,9 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      create_sample_workspace: { Args: Record<PropertyKey, never>; Returns: Json };
+    };
     Enums: { currency_code:CurrencyCode; shipment_status:ShipmentStatus };
     CompositeTypes: { [_ in never]: never };
   };

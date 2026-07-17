@@ -222,6 +222,28 @@ export async function createStarterDirectory(): Promise<ActionResult> {
   });
 }
 
+export async function createSampleWorkspace(): Promise<ActionResult> {
+  return safely("createSampleWorkspace", async () => {
+    const session = await auth();
+    if (!session) return { ok: false, message: "Your session expired. Sign in again." };
+    const { error } = await session.supabase.rpc("create_sample_workspace");
+    if (error) {
+      logActionError("createSampleWorkspace.mutation", error);
+      return {
+        ok: false,
+        message:
+          error.code === "23514"
+            ? "Sample data can only be added to an empty workspace."
+            : "The sample workspace could not be created.",
+      };
+    }
+    revalidatePath("/", "layout");
+    refreshDirectory("clients");
+    refreshDirectory("carriers");
+    return { ok: true };
+  });
+}
+
 export async function upsertClient(formData: FormData, clientId?: string): Promise<ActionResult> {
   return safely("upsertClient", async () => {
     const parsed = clientFormSchema.safeParse(Object.fromEntries(formData));

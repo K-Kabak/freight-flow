@@ -56,3 +56,14 @@ export async function getReportingData(): Promise<ReportData> {
     ...aggregateReportingData(result.shipments, new Date(), carrierNames),
   };
 }
+
+export async function canCreateSampleWorkspace() {
+  const supabase = await createClient();
+  if (!supabase) return false;
+  const [clients, carriers] = await Promise.all([
+    supabase.from("clients").select("id", { count: "exact", head: true }),
+    supabase.from("carriers").select("id", { count: "exact", head: true }),
+  ]);
+  if (clients.error || carriers.error) throw new Error("Unable to inspect sample workspace");
+  return clients.count === 0 && carriers.count === 0;
+}
