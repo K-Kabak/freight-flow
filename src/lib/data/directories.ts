@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { carriers as demoCarriers, clients as demoClients } from "@/data/mock-data";
 import type { Carrier, Client, Shipment } from "@/types";
 import type { Database } from "@/types/database";
+import { calculateClientFinancials } from "@/lib/reporting-calculations";
 
 type ClientRow = Database["public"]["Tables"]["clients"]["Row"];
 type CarrierRow = Database["public"]["Tables"]["carriers"]["Row"];
@@ -10,11 +11,17 @@ export type DirectoryQuery = { q?: string; sort?: string; page?: number; pageSiz
 export type DirectoryPage<T> = { items: T[]; total: number; page: number; pageCount: number; isDemo: boolean };
 
 function clientStats(row: ClientRow, shipments: ShipmentRow[]): Client {
-  const related = shipments.filter((shipment) => shipment.client_id === row.id);
-  const revenue = related.reduce((sum, shipment) => sum + Number(shipment.client_price) * Number(shipment.exchange_rate_to_base), 0);
-  const profit = related.reduce((sum, shipment) => sum + Number(shipment.profit) * Number(shipment.exchange_rate_to_base), 0);
+  const related = shipments
+    .filter((shipment) => shipment.client_id === row.id)
+    .map((shipment) => ({
+      clientPrice: Number(shipment.client_price),
+      carrierCost: Number(shipment.carrier_cost),
+      additionalCosts: Number(shipment.additional_costs),
+      exchangeRateToBase: Number(shipment.exchange_rate_to_base),
+    }));
+  const financials = calculateClientFinancials(related);
   return { id:row.id, companyName:row.company_name, taxId:row.tax_id, contactPerson:row.contact_person, email:row.email, phone:row.phone,
-    totalShipments:related.length, totalRevenue:revenue, averageMargin:revenue ? Number(((profit / revenue) * 100).toFixed(2)) : 0 };
+    ...financials };
 }
 
 function carrierStats(row: CarrierRow, shipments: ShipmentRow[]): Carrier {
