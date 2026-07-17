@@ -43,10 +43,20 @@ export type Database = {
           { foreignKeyName:"shipment_status_events_changed_by_fkey"; columns:["changed_by"]; isOneToOne:false; referencedRelation:"profiles"; referencedColumns:["id"] }
         ];
       };
+      shipment_documents: {
+        Row: { id:string; shipment_id:string; storage_path:string; original_name:string; mime_type:"application/pdf"|"image/jpeg"|"image/png"; size_bytes:number; upload_status:"pending"|"ready"; created_at:string; uploaded_at:string|null };
+        Insert: { id?:string; shipment_id:string; storage_path:string; original_name:string; mime_type:"application/pdf"|"image/jpeg"|"image/png"; size_bytes:number; upload_status?:"pending"|"ready"; created_at?:string; uploaded_at?:string|null };
+        Update: Partial<Database["public"]["Tables"]["shipment_documents"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName:"shipment_documents_shipment_id_fkey"; columns:["shipment_id"]; isOneToOne:false; referencedRelation:"shipments"; referencedColumns:["id"] }
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
       create_sample_workspace: { Args: Record<PropertyKey, never>; Returns: Json };
+      delete_shipment_document_metadata: { Args: { document_id:string }; Returns: undefined };
+      finalize_shipment_document: { Args: { document_id:string }; Returns: undefined };
     };
     Enums: { currency_code:CurrencyCode; shipment_status:ShipmentStatus };
     CompositeTypes: { [_ in never]: never };

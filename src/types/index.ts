@@ -15,5 +15,11 @@ export interface ShipmentStatusEvent {
   kind: "created" | "changed" | "baseline"; changedAt: string;
   actor: { fullName: string; email: string } | null;
 }
+export type ShipmentDocumentMime = "application/pdf" | "image/jpeg" | "image/png";
+export interface ShipmentDocument {
+  id: string; shipmentId: string; storagePath: string; originalName: string;
+  mimeType: ShipmentDocumentMime; sizeBytes: number; status: "pending" | "ready";
+  createdAt: string; uploadedAt: string | null;
+}
 export interface Client { id: string; companyName: string; taxId: string; contactPerson: string; email: string; phone: string; totalShipments: number; totalRevenue: number; averageMargin: number; }
 export interface Carrier { id: string; companyName: string; country: string; contactPerson: string; email: string; phone: string; vehicleType: string; rating: number; completedShipments: number; }
