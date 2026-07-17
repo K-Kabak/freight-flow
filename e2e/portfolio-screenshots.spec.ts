@@ -31,6 +31,24 @@ test("capture portfolio screens from an isolated sample workspace", async ({ pag
   await prepareScreenshot(page);
   await page.screenshot({ path: "public/screenshots/shipments.png", fullPage: true });
 
+  await page.getByRole("link", { name: "FF-DEMO-010" }).click();
+  await expect(page.getByRole("heading", { name: "Edit FF-DEMO-010" })).toBeVisible();
+  await page.getByLabel("Upload document").setInputFiles({
+    name: "signed-cmr.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("portfolio transport document"),
+  });
+  await expect(page.getByText("signed-cmr.png")).toBeVisible();
+  await expect(page.getByText("Document uploaded")).toBeHidden({ timeout: 10_000 });
+  await prepareScreenshot(page);
+  await page.screenshot({ path: "public/screenshots/shipment-details.png", fullPage: true });
+
+  await page.getByRole("link", { name: "Print summary" }).click();
+  await expect(page).toHaveURL(/\/shipments\/[^/]+\/summary$/);
+  await expect(page.getByRole("heading", { name: "FF-DEMO-010", exact: true })).toBeVisible();
+  await prepareScreenshot(page);
+  await page.screenshot({ path: "public/screenshots/shipment-summary.png", fullPage: true });
+
   await page.goto("/analytics");
   await expect(page.getByRole("heading", { name: "Profit by client" })).toBeVisible();
   await prepareScreenshot(page);
