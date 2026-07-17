@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:production": "playwright test e2e/production-live.spec.ts e2e/production-mobile-live.spec.ts --workers=1"
+    "test:e2e:production": "playwright test e2e/production-live.spec.ts e2e/production-mobile-live.spec.ts --workers=1",
+    "screenshots:portfolio": "playwright test e2e/portfolio-screenshots.spec.ts --project=desktop --workers=1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
