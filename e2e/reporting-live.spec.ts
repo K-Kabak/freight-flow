@@ -55,7 +55,7 @@ test("reporting currency and FX snapshots drive live analytics", async ({ page }
   await expect(page.getByText("€180").first()).toBeVisible();
   await page.goto("/analytics");
   await expect(page.getByText("Live profitability analytics in EUR.")).toBeVisible();
-  await expect(page.getByText("FX Client")).toBeVisible();
+  await expect(page.getByText("FX Client").last()).toBeVisible();
   await page.goto("/settings");
   await page.getByLabel("Reporting currency").selectOption("PLN");
   await page.getByRole("button", { name:"Save settings" }).click();
