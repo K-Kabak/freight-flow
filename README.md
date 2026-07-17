@@ -4,16 +4,18 @@ FreightFlow is a portfolio-grade transport management dashboard for dispatchers 
 
 ## Current status
 
-FreightFlow is under active development. The deployed portfolio demo currently uses read-only mock data.
+FreightFlow now includes a complete locally verified mini-TMS. The deployed portfolio demo remains a read-only sample until a hosted Supabase project is provisioned.
 
 | Area | Status |
 | --- | --- |
-| Responsive dashboard, tables and charts | Demo data |
-| Shipment search, status filter and margin preview | Working in demo mode |
+| Responsive dashboard, tables and charts | Live with Supabase; sample data in public demo |
+| Shipment CRUD, server search, filters, sorting and pagination | Working with Supabase configured |
 | Supabase schema, grants and row-level security | Implemented and tested locally |
 | Email/password auth, recovery and sign-out | Working with Supabase configured |
 | Shipment create, read, edit, status update and delete | Working with Supabase configured |
-| Client/carrier CRUD, export and live analytics | Planned |
+| Client and carrier CRUD, ratings, statistics and related shipments | Working with Supabase configured |
+| Live Dashboard, Analytics and saved FX conversion | Working with Supabase configured |
+| CSV/PDF export | Planned |
 
 ## Tech stack
 

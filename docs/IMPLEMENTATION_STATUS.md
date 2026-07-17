@@ -1,90 +1,101 @@
 # FreightFlow — stan implementacji
 
-Data weryfikacji: 16 lipca 2026 r.
+Data ostatniej pełnej weryfikacji: 17 lipca 2026 r.
 
 ## Status
 
-Etap 0 i Etap 1 są ukończone i zweryfikowane. Następnym krokiem jest **Etap 2 — pełny mini-TMS**. Etap 2 ani żaden późniejszy etap nie został rozpoczęty w ramach tej iteracji.
+Etapy 0, 1 i 2 są ukończone i zweryfikowane. Projekt jest gotowy do rozpoczęcia **Etapu 3 — jakość, bezpieczeństwo i odporność**. W tej iteracji nie rozpoczęto prac należących do Etapu 3 ani etapów późniejszych.
 
-## Ukończony zakres
+## Ukończony Etap 2
 
-### Etap 0
+### Klienci
 
-- Usunięto atrapowe akcje globalnego wyszukiwania, eksportu, powiadomień i niezapisujących ustawień.
-- Usunięto formularze klientów i przewoźników, które wcześniej tylko pokazywały fałszywy sukces; bezpośrednie adresy wracają do oznaczonych widoków demonstracyjnych.
-- Dashboard i Analytics jednoznacznie opisują KPI oraz wykresy jako dane przykładowe.
-- Usunięto mylące linki z przykładowych rekordów Dashboard do nieistniejących danych użytkownika.
-- Sidebar rozróżnia read-only demo od prywatnego workspace'u Supabase.
-- README opisuje stan faktyczny, lokalny setup, zakres live CRUD i ograniczenia wdrożonego demo.
+- Pełny create, read, update i delete oparty na Supabase i Server Actions.
+- Walidacja kontaktu, e-maila, telefonu i Tax/VAT ID przez Zod.
+- Statystyki przesyłek, przychodu w walucie raportowej i ważonej marży.
+- Widok szczegółowy z edycją oraz listą powiązanych przesyłek.
+- Serwerowe wyszukiwanie, sortowanie i paginacja.
+- Czytelny błąd przy próbie usunięcia klienta używanego przez przesyłkę.
 
-### Etap 1
+### Przewoźnicy
 
-- Dodano odtwarzalny lokalny stack Supabase oraz migracje schematu i grantów.
-- Skonfigurowano tabele `profiles`, `clients`, `carriers`, `shipments`, typy enum, constraints, indeksy, triggery, klucze obce i generowane pola finansowe.
-- Włączono RLS dla wszystkich tabel; rekordy biznesowe należą do użytkownika Supabase Auth.
-- Zaimplementowano rejestrację, logowanie, wylogowanie, ochronę tras, reset hasła i callback PKCE.
-- Callback akceptuje wyłącznie bezpieczne przekierowania wewnętrzne i uwzględnia publiczny host za proxy.
-- Lista przesyłek pobiera prawdziwe dane z Supabase w skonfigurowanym środowisku.
-- Dla pustego konta można utworzyć kontrolowany zestaw startowy klienta i przewoźnika.
-- Zaimplementowano create, read, edit, status update i delete dla przesyłek.
-- Formularz pokazuje zysk i marżę, a baza ponownie wylicza te wartości.
-- Po mutacjach UI odświeża dane przez revalidation/router refresh.
-- Działają wyszukiwanie, filtr statusu, walidacja Zod, komunikaty błędów i potwierdzenie usuwania.
+- Pełny create, read, update i delete oparty na Supabase i Server Actions.
+- Rating 1–5, walidacja danych kontaktowych, kraju i typu pojazdu.
+- Liczba zakończonych przesyłek i widok powiązanych zleceń.
+- Serwerowe wyszukiwanie, sortowanie i paginacja.
+- Czytelny błąd przy próbie usunięcia przewoźnika używanego przez przesyłkę.
 
-## Zweryfikowane przepływy
+### Shipments
 
-- Rejestracja przez UI i automatyczne wejście do workspace'u przy wyłączonym potwierdzaniu e-mail.
-- Wylogowanie i ponowne logowanie hasłem.
-- Wysłanie wiadomości recovery, przejście przez rzeczywisty lokalny link Mailpit, callback PKCE, ustawienie nowego hasła i logowanie nowym hasłem.
-- Ochrona prywatnych tras i sesja utrzymywana w cookies.
-- Pobranie przesyłek z prawdziwego lokalnego Supabase.
-- Utworzenie katalogu startowego, utworzenie przesyłki, wyświetlenie jej na liście, pełna edycja, zmiana statusu i usunięcie.
-- Natychmiastowa aktualizacja listy po każdej mutacji.
-- Izolacja RLS: drugi użytkownik nie odczytuje ani nie modyfikuje klienta oraz nie odczytuje ani nie usuwa przesyłki właściciela.
-- Odrzucenie przesyłki próbującej użyć klienta i przewoźnika innego użytkownika.
-- Blokada usunięcia klienta posiadającego powiązaną przesyłkę.
-- Responsywny przebieg auth i shipment lifecycle na profilu desktopowym i mobilnym.
+- Lista korzysta z serwerowego wyszukiwania po referencji, trasie i kliencie.
+- Dodano serwerowe filtrowanie statusu, sortowanie i paginację.
+- Zachowano pełny CRUD, zmianę statusu, obliczenia biznesowe i RLS z Etapu 1.
 
-## Wyniki kontroli
+### Dashboard i Analytics
 
-Wszystkie kontrole zakończyły się powodzeniem 16 lipca 2026 r.:
+- Prywatny Dashboard i Analytics nie korzystają z mocków.
+- KPI obejmują aktywne i zakończone przesyłki, przychód, koszty, zysk i ważoną marżę.
+- Wykres sześciomiesięczny, rozkład statusów, profit per client oraz rankingi klientów i przewoźników powstają z danych użytkownika.
+- Empty states nie podstawiają danych portfolio do pustego prywatnego konta.
+- Publiczne środowisko bez Supabase nadal działa jako jawnie oznaczone read-only demo.
+
+### Waluta raportowa i FX
+
+- Użytkownik może wybrać PLN, EUR lub USD przed utworzeniem pierwszej przesyłki.
+- Formularz wymaga ręcznego kursu wyłącznie dla przesyłki w innej walucie.
+- Kurs `exchange_rate_to_base` jest zapisywany z przesyłką jako historyczny snapshot.
+- Dashboard, Analytics i statystyki klientów agregują kwoty po zapisanym kursie.
+- Zmiana waluty raportowej po utworzeniu przesyłek jest blokowana, aby nie interpretować historycznych snapshotów w innej walucie bazowej.
+
+### Stany i responsywność
+
+- Dostępne są globalne loading/error/not-found states oraz lokalne empty states list i raportów.
+- Formularze, tabele, nawigacja, katalogi i raporty zostały przejście E2E na profilach desktop i mobile.
+
+## Zweryfikowane przepływy end-to-end
+
+- rejestracja, logowanie, wylogowanie i password recovery z callbackiem PKCE;
+- brak przykładowych przesyłek i klientów na pustym prywatnym koncie;
+- CRUD klienta i przewoźnika wraz z ratingiem i edycją;
+- utworzenie przesyłki powiązanej z katalogami;
+- blokada usunięcia używanego klienta, a następnie poprawne usunięcie po usunięciu przesyłki;
+- create, read, pełna edycja, status update i delete przesyłki;
+- wyszukiwanie przesyłki po kliencie oraz filtrowanie statusu;
+- ustawienie EUR jako waluty raportowej;
+- przesyłka USD z ręcznym kursem 0,9 i poprawnymi agregatami EUR na Dashboardzie i Analytics;
+- blokada późniejszej zmiany waluty raportowej;
+- izolacja użytkowników przez RLS oraz odrzucenie cross-tenant relationships.
+
+## Wyniki końcowych kontroli
 
 | Kontrola | Wynik |
 | --- | --- |
-| `npm run lint` | PASS — 0 błędów |
+| `npm run lint` | PASS — 0 błędów i ostrzeżeń |
 | `npm run typecheck` | PASS — 0 błędów TypeScript |
-| `npm test` | PASS — 2 pliki, 8 testów |
-| `SUPABASE_E2E=true npm run test:e2e -- --workers=1` | PASS — 10/10, desktop i mobile |
-| Rozszerzony test RLS po dodaniu asercji bezpieczeństwa | PASS — 2/2, desktop i mobile |
+| `npm test` | PASS — 3 pliki, 11 testów |
+| `SUPABASE_E2E=true npm run test:e2e -- --workers=1` | PASS — 14/14, desktop i mobile |
 | `npm run build` | PASS — produkcyjny build Next.js 16.2.10 |
 
-E2E działało na lokalnym Supabase, nie na mockach. Test recovery odczytał wiadomość z lokalnego Mailpit i użył wygenerowanego linku w przeglądarce.
+Testy E2E korzystały z lokalnego Supabase, PostgreSQL, Auth, PostgREST i Mailpit. Nie używały danych mockowych do weryfikacji prywatnego workspace'u.
 
-## Commity Etapu 0 i 1
+## Commity Etapu 2
 
-- `5e58966 chore: clarify demo-only application features`
-- `46fb215 chore(supabase): add reproducible local development setup`
-- `99c9c5f fix(types): align database types with Supabase schema`
-- `9cb1aaa feat(auth): complete session and password recovery flows`
-- `93af504 feat(shipments): connect lifecycle to Supabase`
-- `f82c3c9 test(shipments): cover live CRUD and tenant isolation`
-- `232603e feat(shipments): add starter directory onboarding`
-- `6dc2f63 test(shipments): verify complete edit workflow`
-- `659044a docs(readme): document authenticated shipment milestone`
-- `a9aeac3 fix(ui): remove remaining placeholder interactions`
-- `1c3fb75 fix(auth): complete registration and recovery flows`
-- `5bb0e8a test(security): expand tenant isolation coverage`
-- Końcowy commit dokumentacyjny zawierający ten raport i roadmapę.
+- `1d5dd72 feat(directories): add live client and carrier management`
+- `266c8e3 feat(reporting): add live analytics and currency settings`
+- `b7a9431 test(directories): cover contact and rating validation`
+- `93f4f80 fix(shipments): preserve client search in server filters`
+- `692b5ef test(reporting): stabilize analytics assertion`
+- końcowy commit dokumentacyjny aktualizujący README, roadmapę i ten raport.
 
-## Znane problemy i ograniczenia
+## Znane ograniczenia
 
-- Publiczny deployment Vercel pozostaje read-only demo, ponieważ nie podłączono jeszcze produkcyjnego projektu Supabase. Pełny Etap 1 jest zweryfikowany lokalnie.
-- Dashboard, Analytics, Clients, Carriers i Settings nadal pokazują jawnie oznaczone dane lub formularze demonstracyjne/read-only; ich podłączenie należy do Etapu 2.
-- Lokalne uruchomienie pełnego zestawu usług Supabase na Windows może zgłosić problem health check usługi Storage. Zakres Etapu 1 nie używa Storage; wymagane usługi Auth, Postgres, PostgREST, Kong i Mailpit działają poprawnie.
-- GitHub Actions wykonuje lint, typecheck, testy jednostkowe i build. Testy live Supabase/E2E wymagają osobnego środowiska Docker i obecnie są uruchamiane lokalnie.
+- Publiczny deployment Vercel nadal jest read-only demo bez produkcyjnego Supabase. Hostowany Supabase i produkcyjna weryfikacja należą do Etapu 4.
+- Waluta raportowa jest świadomie niezmienna po pierwszej przesyłce. Zmiana historycznej waluty bazowej wymagałaby dodatkowej tabeli kursów lub migracji snapshotów.
+- Statystyki katalogów i raporty są agregowane po stronie serwera aplikacji. Jest to wystarczające dla obecnego MVP; przy dużych zbiorach należy przenieść agregacje do widoków lub funkcji PostgreSQL.
+- Live E2E wymaga lokalnego Dockera i nie jest jeszcze uruchamiane w GitHub Actions. Rozszerzenie CI należy do Etapu 3.
 
-## Elementy niedokończone w Etapie 0 i 1
+## Elementy niedokończone w Etapie 2
 
-Brak znanych niedokończonych elementów blokujących kryteria akceptacji Etapu 0 lub Etapu 1.
+Brak znanych elementów niedokończonych, które blokowałyby kryteria akceptacji Etapu 2.
 
-Funkcje nieobjęte tymi etapami — CRUD klientów/przewoźników, live Dashboard/Analytics, waluta raportowa, snapshot FX, paginacja i produkcyjny Supabase — są świadomie pozostawione do Etapu 2 i kolejnych etapów, a interfejs nie przedstawia ich jako gotowych.
+Eksport, dokumenty, role, publiczne śledzenie, rozbudowana macierz testów bezpieczeństwa i produkcyjny deployment nie należą do Etapu 2 i pozostają w kolejnych etapach roadmapy.

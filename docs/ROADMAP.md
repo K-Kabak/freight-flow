@@ -1,6 +1,6 @@
 # FreightFlow — roadmap produktu
 
-Stan roadmapy: zaakceptowana. Etapy 0 i 1 zakończono 16 lipca 2026 r. Kolejne prace rozpoczynają się od Etapu 2.
+Stan roadmapy: zaakceptowana. Etapy 0–2 są zakończone i zweryfikowane. Kolejne prace rozpoczynają się od Etapu 3.
 
 ## Cel produktu
 
@@ -72,7 +72,7 @@ Kryteria akceptacji:
 
 ## Etap 2 — pełny mini-TMS
 
-Status: następny etap; nierozpoczęty.
+Status: zakończony i zweryfikowany 17 lipca 2026 r.
 
 Cel: zastąpić pozostałe widoki demonstracyjne kompletnymi modułami operacyjnymi.
 
@@ -162,16 +162,7 @@ Poza zakresem pierwszego MVP pozostają automatyczne kursy walut, rozliczenia/fa
 
 ## Najbliższe priorytety
 
-1. Zaprojektować serwerowe query API dla klientów i przewoźników.
-2. Zaimplementować CRUD klientów.
-3. Zaimplementować CRUD przewoźników.
-4. Dodać testy blokady usuwania powiązanych rekordów w UI.
-5. Przenieść Dashboard na rzeczywiste agregaty.
-6. Przenieść Analytics na rzeczywiste agregaty.
-7. Zaimplementować walutę raportową i snapshot FX.
-8. Dodać paginację i sortowanie serwerowe.
-9. Uzupełnić stany loading/error/empty/not-found.
-10. Rozszerzyć E2E o cały mini-TMS.
+Następnym krokiem jest Etap 3. Priorytety obejmują rozszerzenie macierzy testów RLS, testy komponentów formularzy, przegląd dostępności, bezpieczeństwa i wydajności oraz przygotowanie stabilnego środowiska E2E w CI.
 
 ## Standard Git i GitHub
 
