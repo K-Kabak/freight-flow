@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
 import {
+  clearLiveBusinessData,
   createLiveUser,
   signIn,
   supabaseKey,
@@ -299,9 +300,11 @@ test("private shipment documents remain isolated and require finalization", asyn
   expect(
     (await owner.api.from("shipment_documents").select("id").eq("id", documentId)).data,
   ).toEqual([]);
-  expect(
-    (await owner.api.storage.from("shipment-documents").download(storagePath)).error,
-  ).not.toBeNull();
+  const deletedObjects = await owner.api.storage
+    .from("shipment-documents")
+    .list(`${owner.user.id}/${shipmentId}`, { search: documentId });
+  expect(deletedObjects.error).toBeNull();
+  expect(deletedObjects.data).toEqual([]);
 
   await page.getByLabel("Upload document").setInputFiles({
     name: "cmr-scan.png",
@@ -327,4 +330,7 @@ test("private shipment documents remain isolated and require finalization", asyn
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete cmr-scan.png" }).click();
   await expect(documents.getByText("cmr-scan.png")).toBeHidden();
+
+  await clearLiveBusinessData(owner.api);
+  await clearLiveBusinessData(stranger.api);
 });

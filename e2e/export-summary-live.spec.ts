@@ -1,5 +1,5 @@
 import { expect, test, type Download } from "@playwright/test";
-import { createLiveUser, signIn } from "./support/live-workspace";
+import { clearLiveBusinessData, createLiveUser, signIn } from "./support/live-workspace";
 
 test.skip(process.env.SUPABASE_E2E !== "true", "Requires the local Supabase stack");
 
@@ -179,4 +179,7 @@ test("CSV respects filters and RLS while the print summary remains private", asy
 
   await page.goto(`/shipments/${shipmentId}/summary`);
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+
+  await clearLiveBusinessData(owner.api);
+  await clearLiveBusinessData(stranger.api);
 });

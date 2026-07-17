@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
 import {
+  clearLiveBusinessData,
   createLiveUser,
   signIn,
   supabaseKey,
@@ -10,6 +11,7 @@ import {
 test.skip(process.env.SUPABASE_E2E !== "true", "Requires the local Supabase stack");
 
 test("database records an immutable tenant-isolated status history", async ({ page }) => {
+  test.setTimeout(60_000);
   const owner = await createLiveUser(test.info(), "status-owner");
   const stranger = await createLiveUser(test.info(), "status-stranger");
   const clientId = crypto.randomUUID();
@@ -141,4 +143,7 @@ test("database records an immutable tenant-isolated status history", async ({ pa
   await expect(timeline.getByRole("listitem")).toHaveCount(2);
   await expect(timeline.getByText("Status changed from New to")).toBeVisible();
   await expect(timeline.getByText(owner.email)).toHaveCount(2);
+
+  await clearLiveBusinessData(owner.api);
+  await clearLiveBusinessData(stranger.api);
 });

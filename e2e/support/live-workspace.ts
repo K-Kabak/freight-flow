@@ -1,5 +1,5 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -24,4 +24,17 @@ export async function signIn(page: Page, email: string, password = livePassword)
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/dashboard/);
+}
+
+export async function clearLiveBusinessData(api: SupabaseClient) {
+  const { data: documents } = await api
+    .from("shipment_documents")
+    .select("id,storage_path");
+  for (const document of documents ?? []) {
+    await api.storage.from("shipment-documents").remove([document.storage_path]);
+    await api.rpc("delete_shipment_document_metadata", { document_id: document.id });
+  }
+  await api.from("shipments").delete().neq("id", crypto.randomUUID());
+  await api.from("clients").delete().neq("id", crypto.randomUUID());
+  await api.from("carriers").delete().neq("id", crypto.randomUUID());
 }
