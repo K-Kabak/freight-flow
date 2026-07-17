@@ -1,5 +1,2 @@
-import { redirect } from "next/navigation";
-
-export default function NewClientPage() {
-  redirect("/clients");
-}
+import { DirectoryForm } from "@/components/directory-form";import { PageHeader } from "@/components/page-header";import { createClient } from "@/lib/supabase/server";import { redirect } from "next/navigation";
+export default async function NewClientPage(){if(!await createClient())redirect("/clients");return <><PageHeader title="Add client" description="Create a customer profile for freight orders."/><DirectoryForm type="client"/></>}

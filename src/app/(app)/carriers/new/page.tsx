@@ -1,5 +1,2 @@
-import { redirect } from "next/navigation";
-
-export default function NewCarrierPage() {
-  redirect("/carriers");
-}
+import { DirectoryForm } from "@/components/directory-form";import { PageHeader } from "@/components/page-header";import { createClient } from "@/lib/supabase/server";import { redirect } from "next/navigation";
+export default async function NewCarrierPage(){if(!await createClient())redirect("/carriers");return <><PageHeader title="Add carrier" description="Add a rated transport partner to your network."/><DirectoryForm type="carrier"/></>}

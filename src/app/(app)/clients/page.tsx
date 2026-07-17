@@ -1,5 +1,2 @@
-import { Info } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { DirectoryTable } from "@/components/directory-table";
-export default function ClientsPage(){return <><PageHeader title="Clients" description="Demo preview — client management follows the shipment milestone."><Button variant="outline" disabled><Info size={16}/>Demo data</Button></PageHeader><DirectoryTable type="clients"/></>}
+import Link from "next/link";import { Plus } from "lucide-react";import { DirectoryTable } from "@/components/directory-table";import { PageHeader } from "@/components/page-header";import { Button } from "@/components/ui/button";import { getClients } from "@/lib/data/directories";
+export default async function ClientsPage({searchParams}:{searchParams:Promise<{q?:string;sort?:string;page?:string}>}){const params=await searchParams;const data=await getClients({q:params.q,sort:params.sort,page:Number(params.page)||1});return <><PageHeader title="Clients" description="Manage customer relationships and transport revenue.">{data.isDemo?<Button disabled>Read-only demo</Button>:<Link href="/clients/new"><Button><Plus size={16}/>Add client</Button></Link>}</PageHeader><DirectoryTable type="clients" data={data} query={params.q??""} sort={params.sort??"name"}/></>}
