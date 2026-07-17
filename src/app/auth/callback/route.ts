@@ -1,22 +1,31 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-function safeDestination(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
-}
+export function safeDestination(value: string | null, origin: string) {
+  if (!value?.startsWith("/") || value.startsWith("//")) {
+    return "/dashboard";
+  }
 
-function publicOrigin(request: Request) {
-  const fallback = new URL(request.url);
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const protocol = request.headers.get("x-forwarded-proto") ?? fallback.protocol.replace(":", "");
-  return host ? `${protocol}://${host}` : fallback.origin;
+  try {
+    const decoded = decodeURIComponent(value);
+    if (decoded.includes("\\") || /[\u0000-\u001f\u007f]/.test(decoded)) {
+      return "/dashboard";
+    }
+
+    const destination = new URL(value, origin);
+    return destination.origin === origin
+      ? `${destination.pathname}${destination.search}${destination.hash}`
+      : "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const origin = publicOrigin(request);
+  const origin = url.origin;
   const code = url.searchParams.get("code");
-  const destination = safeDestination(url.searchParams.get("next"));
+  const destination = safeDestination(url.searchParams.get("next"), origin);
 
   if (!code) {
     return NextResponse.redirect(new URL("/login?error=missing_callback_code", origin));
