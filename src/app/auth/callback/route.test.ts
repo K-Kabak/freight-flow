@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { safeDestination } from "./route";
 
-const origin = "https://freightflow.example";
-
 describe("auth callback destination", () => {
   it("keeps internal paths with their query string", () => {
-    expect(safeDestination("/reset-password?source=recovery", origin)).toBe(
+    expect(safeDestination("/reset-password?source=recovery")).toBe(
       "/reset-password?source=recovery",
     );
   });
@@ -17,6 +15,6 @@ describe("auth callback destination", () => {
     "/\\evil.example/path",
     "/%5Cevil.example/path",
   ])("falls back for an unsafe destination: %s", (destination) => {
-    expect(safeDestination(destination, origin)).toBe("/dashboard");
+    expect(safeDestination(destination)).toBe("/dashboard");
   });
 });

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export function safeDestination(value: string | null, origin: string) {
+const validationOrigin = "https://freightflow.invalid";
+
+export function safeDestination(value: string | null) {
   if (!value?.startsWith("/") || value.startsWith("//")) {
     return "/dashboard";
   }
@@ -12,8 +14,8 @@ export function safeDestination(value: string | null, origin: string) {
       return "/dashboard";
     }
 
-    const destination = new URL(value, origin);
-    return destination.origin === origin
+    const destination = new URL(value, validationOrigin);
+    return destination.origin === validationOrigin
       ? `${destination.pathname}${destination.search}${destination.hash}`
       : "/dashboard";
   } catch {
@@ -21,14 +23,17 @@ export function safeDestination(value: string | null, origin: string) {
   }
 }
 
+function redirectTo(path: string) {
+  return new NextResponse(null, { status: 303, headers: { location: path } });
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const origin = url.origin;
   const code = url.searchParams.get("code");
-  const destination = safeDestination(url.searchParams.get("next"), origin);
+  const destination = safeDestination(url.searchParams.get("next"));
 
   if (!code) {
-    return NextResponse.redirect(new URL("/login?error=missing_callback_code", origin));
+    return redirectTo("/login?error=missing_callback_code");
   }
 
   const supabase = await createClient();
@@ -37,8 +42,8 @@ export async function GET(request: Request) {
   };
 
   if (error) {
-    return NextResponse.redirect(new URL("/login?error=invalid_callback", origin));
+    return redirectTo("/login?error=invalid_callback");
   }
 
-  return NextResponse.redirect(new URL(destination, origin));
+  return redirectTo(destination);
 }
