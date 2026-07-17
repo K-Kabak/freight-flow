@@ -1,6 +1,6 @@
 import { carriers as demoCarriers, clients as demoClients, shipments as demoShipments } from "@/data/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import type { Shipment } from "@/types";
+import type { Shipment, ShipmentStatusEvent } from "@/types";
 import type { Database } from "@/types/database";
 
 type ShipmentRow = Database["public"]["Tables"]["shipments"]["Row"];
@@ -171,6 +171,39 @@ export async function getShipment(
     .maybeSingle();
   if (error) throw new Error("Unable to load shipment");
   return { shipment: data ? mapShipment(data as RelatedShipment) : null, isDemo: false };
+}
+
+type StatusEventRow = Database["public"]["Tables"]["shipment_status_events"]["Row"] & {
+  actor: { full_name: string; email: string } | null;
+};
+
+export async function getShipmentStatusEvents(
+  shipmentId: string,
+): Promise<ShipmentStatusEvent[]> {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("shipment_status_events")
+    .select(
+      "id, shipment_id, from_status, to_status, event_kind, changed_at, changed_by, actor:profiles!shipment_status_events_changed_by_fkey(full_name, email)",
+    )
+    .eq("shipment_id", shipmentId)
+    .order("changed_at", { ascending: false })
+    .order("id", { ascending: false });
+  if (error) throw new Error("Unable to load shipment status history");
+
+  return ((data ?? []) as StatusEventRow[]).map((event) => ({
+    id: event.id,
+    shipmentId: event.shipment_id,
+    fromStatus: event.from_status,
+    toStatus: event.to_status,
+    kind: event.event_kind,
+    changedAt: event.changed_at,
+    actor: event.actor
+      ? { fullName: event.actor.full_name, email: event.actor.email }
+      : null,
+  }));
 }
 
 export async function getDirectoryOptions(): Promise<{

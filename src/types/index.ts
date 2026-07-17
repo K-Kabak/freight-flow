@@ -10,5 +10,10 @@ export interface Shipment {
   additionalCosts: number; profit: number; marginPercent: number; currency: Currency;
   exchangeRateToBase: number; status: ShipmentStatus; notes?: string;
 }
+export interface ShipmentStatusEvent {
+  id: string; shipmentId: string; fromStatus: ShipmentStatus | null; toStatus: ShipmentStatus;
+  kind: "created" | "changed" | "baseline"; changedAt: string;
+  actor: { fullName: string; email: string } | null;
+}
 export interface Client { id: string; companyName: string; taxId: string; contactPerson: string; email: string; phone: string; totalShipments: number; totalRevenue: number; averageMargin: number; }
 export interface Carrier { id: string; companyName: string; country: string; contactPerson: string; email: string; phone: string; vehicleType: string; rating: number; completedShipments: number; }
