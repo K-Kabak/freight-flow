@@ -26,3 +26,8 @@ button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
   outline-offset: 2px;
 }
 ::selection { background: #c8ece2; color: #104b3d; }
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  body { background: white; }
+}

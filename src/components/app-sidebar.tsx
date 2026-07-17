@@ -67,7 +67,7 @@ export function AppSidebar({
         tabIndex={-1}
         onClick={close}
         className={cn(
-          "fixed inset-0 z-30 bg-slate-950/30 lg:hidden",
+          "fixed inset-0 z-30 bg-slate-950/30 lg:hidden print:hidden",
           open ? "block" : "hidden",
         )}
       />
@@ -76,7 +76,7 @@ export function AppSidebar({
         ref={sidebar}
         aria-label="Primary navigation"
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0 print:hidden",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >

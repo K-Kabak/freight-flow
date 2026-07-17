@@ -32,8 +32,8 @@ export function AppShell({
   return (
     <div className="min-h-screen">
       <AppSidebar open={open} close={close} isDemo={isDemo} />
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-20 items-center border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-8">
+      <div className="lg:pl-64 print:pl-0">
+        <header className="sticky top-0 z-20 flex h-20 items-center border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-8 print:hidden">
           <button
             ref={menuButton}
             type="button"
@@ -65,7 +65,7 @@ export function AppShell({
             )}
           </div>
         </header>
-        <main className="p-4 sm:p-8">{children}</main>
+        <main className="p-4 sm:p-8 print:p-0">{children}</main>
       </div>
     </div>
   );
