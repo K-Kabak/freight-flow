@@ -106,4 +106,3 @@ for each row execute function public.record_shipment_status_event();
 
 comment on table public.shipment_status_events is
   'Immutable status audit records. user_id is the workspace owner; changed_by is the actor.';
-
