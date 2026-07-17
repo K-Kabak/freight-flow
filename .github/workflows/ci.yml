@@ -40,7 +40,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Start minimal Supabase stack
-        run: supabase start -x studio,realtime,imgproxy,edge-runtime,vector,logflare,supavisor,storage-api,postgres-meta
+        run: supabase start -x studio,realtime,imgproxy,edge-runtime,vector,logflare,supavisor,postgres-meta
       - run: supabase db reset
       - run: supabase db lint --local
       - run: npm run test:e2e
