@@ -118,7 +118,9 @@ export async function getShipments(
     pickup: "pickup_date",
   };
   const sort = sortFields[query?.sort ?? "pickup"] ?? "pickup_date";
-  request = request.order(sort, { ascending: sort !== "pickup_date" });
+  request = request
+    .order(sort, { ascending: sort !== "pickup_date" })
+    .order("id", { ascending: true });
   if (query) request = request.range((page - 1) * pageSize, page * pageSize - 1);
 
   const { data, error, count } = await request;
@@ -171,6 +173,21 @@ export async function getShipment(
     .maybeSingle();
   if (error) throw new Error("Unable to load shipment");
   return { shipment: data ? mapShipment(data as RelatedShipment) : null, isDemo: false };
+}
+
+export async function getShipmentsForExport(
+  query: Omit<ShipmentQuery, "page" | "pageSize">,
+): Promise<{ shipments: Shipment[]; isDemo: boolean }> {
+  const pageSize = 500;
+  const first = await getShipments({ ...query, page: 1, pageSize });
+  const shipments = [...first.shipments];
+
+  for (let page = 2; page <= first.pageCount; page += 1) {
+    const next = await getShipments({ ...query, page, pageSize });
+    shipments.push(...next.shipments);
+  }
+
+  return { shipments, isDemo: first.isDemo };
 }
 
 type StatusEventRow = Database["public"]["Tables"]["shipment_status_events"]["Row"] & {
