@@ -9,7 +9,7 @@ test.skip(
 test("hosted deployment keeps protected navigation usable on mobile", async ({ page }) => {
   await signInToProduction(page);
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
   await page.getByRole("link", { name: "Analytics" }).click();
   await expect(page).toHaveURL(/analytics/);
   await expect(page.getByRole("heading", { name: "Analytics" })).toBeVisible();
