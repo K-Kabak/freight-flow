@@ -1,6 +1,6 @@
 # FreightFlow — roadmap produktu
 
-Stan roadmapy: zaakceptowana. Etapy 0–2 są zakończone i zweryfikowane. Kolejne prace rozpoczynają się od Etapu 3.
+Stan roadmapy: zaakceptowana. Etapy 0–3 są zakończone i zweryfikowane. Trwa realizacja Etapu 4.
 
 ## Cel produktu
 
@@ -132,7 +132,7 @@ Wynik realizacji:
 
 ## Etap 4 — publikacja portfolio
 
-Status: planowany.
+Status: w trakcie realizacji.
 
 Zakres:
 
